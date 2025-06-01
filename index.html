@@ -32,12 +32,12 @@
   </style>
 </head>
 <body>
-  
+  <pre><code>
   <div class="code-block">
 
     <h2>Linear Regression with Standard Scaling</h2>
     
-    <pre><code>import pandas as pd
+  import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
@@ -66,7 +66,7 @@ scaled_input = scaler.transform([[2300, 1.3]])
 predicted_co2 = model.predict(scaled_input)
 
 # Print the predicted CO2
-print(predicted_co2)</code></pre>
+print(predicted_co2)
   </div>
 
   
@@ -74,7 +74,7 @@ print(predicted_co2)</code></pre>
 
     <h2>ANN Implementation in Python (using Keras)</h2>
     
-    <pre><code>import numpy as np
+    import numpy as np
 import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
@@ -115,7 +115,7 @@ model.fit(X_train, y_train, epochs=50, batch_size=16, verbose=1)
 
 # Step 7: Evaluate the model
 y_pred = (model.predict(X_test) > 0.5).astype("int32")
-print(classification_report(y_test, y_pred))</code></pre>
+print(classification_report(y_test, y_pred))
   </div>
 
   
@@ -123,7 +123,7 @@ print(classification_report(y_test, y_pred))</code></pre>
 
     <h2>Diabetes Prediction ANN</h2>
     
-    <pre><code>import pandas as pd
+   import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -168,7 +168,7 @@ model.fit(X_train, y_train, epochs=100, batch_size=10, verbose=1)
 
 # Step 8: Evaluate the model
 y_pred = (model.predict(X_test) > 0.5).astype("int32")
-print(classification_report(y_test, y_pred))</code></pre>
+print(classification_report(y_test, y_pred))
   </div>
 
   
@@ -176,7 +176,7 @@ print(classification_report(y_test, y_pred))</code></pre>
 
     <h2>K-Means with Iris Dataset</h2>
     
-    <pre><code>import numpy as np
+  import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -218,7 +218,7 @@ plt.xlabel("PCA Component 1")
 plt.ylabel("PCA Component 2")
 plt.legend(title="Cluster")
 plt.grid(True)
-plt.show()</code></pre>
+plt.show()
   </div>
 
   
@@ -226,7 +226,7 @@ plt.show()</code></pre>
 
     <h2>K-Means with Synthetic Data</h2>
     
-    <pre><code>import numpy as np
+   import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
@@ -269,9 +269,9 @@ plt.xlabel('PCA Component 1')
 plt.ylabel('PCA Component 2')
 plt.legend()
 plt.grid(True)
-plt.show()</code></pre>
+plt.show()
   </div>
-
+</code></pre>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
       // Copy all code blocks to clipboard
