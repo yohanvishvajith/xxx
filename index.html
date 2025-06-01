@@ -33,11 +33,77 @@
 </head>
 <body>
   <pre><code>
+    
+    <div class="code-block">
+      
+    <h2>Breadth-First Search (BFS) </br>
+    BFS Implementation 1</h2>
+
+graph = {
+    '5': ['3', '7'],
+    '3': ['2', '4'],
+    '7': ['8'],
+    '2': [],
+    '4': ['8'],
+    '8': []
+}
+
+visited = [] # List for visited nodes
+queue = []   # Initialize a queue
+
+def bfs(visited, graph, node):
+    visited.append(node)
+    queue.append(node)
+    
+    while queue:          # Loop to visit each node
+        m = queue.pop(0)
+        print(m, end=" ")
+        
+        for neighbour in graph[m]:
+            if neighbour not in visited:
+                visited.append(neighbour)
+                queue.append(neighbour)
+
+# Driver Code
+print("Following is the Breadth-First Search")
+bfs(visited, graph, '5')
+
+    </div>
+
+
+    <div class="code-block">
+      
+    <h2>BFS Implementation 2 (using collections.deque)</h2>
+
+import collections
+
+def bfs(graph, root):
+    visited, queue = set(), collections.deque([root])
+    visited.add(root)
+    
+    while queue:
+        vertex = queue.popleft()
+        print(str(vertex) + " ", end="")
+        
+        for neighbour in graph[vertex]:
+            if neighbour not in visited:
+                visited.add(neighbour)
+                queue.append(neighbour)
+
+if __name__ == '__main__':
+    graph = {0: [1, 2], 1: [2], 2: [3], 3: [1, 2]}
+    print("Following is Breadth First Traversal: ")
+    bfs(graph, 0)
+
+    </div>
+
+
+    
   <div class="code-block">
 
     <h2>Linear Regression with Standard Scaling</h2>
     
-  import pandas as pd
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
@@ -74,7 +140,7 @@ print(predicted_co2)
 
     <h2>ANN Implementation in Python (using Keras)</h2>
     
-    import numpy as np
+import numpy as np
 import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
@@ -123,7 +189,7 @@ print(classification_report(y_test, y_pred))
 
     <h2>Diabetes Prediction ANN</h2>
     
-   import pandas as pd
+import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -176,7 +242,7 @@ print(classification_report(y_test, y_pred))
 
     <h2>K-Means with Iris Dataset</h2>
     
-  import numpy as np
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -226,7 +292,7 @@ plt.show()
 
     <h2>K-Means with Synthetic Data</h2>
     
-   import numpy as np
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
