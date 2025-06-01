@@ -3,214 +3,274 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Code Examples</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    pre {
+      background-color: #1e1e1e;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin: 10px 0;
+    }
+    .code-block {
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #4fc3f7;
+      margin-top: 30px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+    }
+  </style>
 </head>
 <body>
-  <p>
-  
-import pandas as pd  <br>
-from sklearn.preprocessing import StandardScaler  <br>
-from sklearn.linear_model import LinearRegression  <br>
+  <h2>Linear Regression with Standard Scaling</h2>
+  <div class="code-block">
+    <pre><code>import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 
+# Load the dataset
+df = pd.read_csv('mydata.csv')
 
-# Load the dataset  <br>
-df = pd.read_csv('mydata.csv')  <br>
+# Extract Weight and Volume columns
+weight_volume = df[['Weight', 'Volume']]
 
-# Extract Weight and Volume columns  <br>
-weight_volume = df[['Weight', 'Volume']]  <br>
+# Apply StandardScaler to these features
+scaler = StandardScaler()
+scaled_weight_volume = scaler.fit_transform(weight_volume)
 
-# Apply StandardScaler to these features  <br>
-scaler = StandardScaler()  <br>
-scaled_weight_volume = scaler.fit_transform(weight_volume)  <br>
+# Print the scaled values
+print(scaled_weight_volume)
 
-# Print the scaled values  <br>
-print(scaled_weight_volume)  <br>
+# Train a linear regression model using scaled Weight and Volume
+model = LinearRegression()
+model.fit(scaled_weight_volume, df['CO2'])
 
-# Train a linear regression model using scaled Weight and Volume  <br>
-model = LinearRegression()  <br>
-model.fit(scaled_weight_volume, df['CO2'])  <br>
+# Predict CO2 for a car with Weight = 2300kg, Volume = 1.3
+# First, scale the input values using the same scaler
+scaled_input = scaler.transform([[2300, 1.3]])
 
-# Predict CO2 for a car with Weight = 2300kg, Volume = 1.3  <br>
-# First, scale the input values using the same scaler  <br>
-scaled_input = scaler.transform([[2300, 1.3]])  <br>
+# Now predict using the scaled input
+predicted_co2 = model.predict(scaled_input)
 
-# Now predict using the scaled input  <br>
-predicted_co2 = model.predict(scaled_input)  <br>
+# Print the predicted CO2
+print(predicted_co2)</code></pre>
+  </div>
 
-# Print the predicted CO2  <br>
-print(predicted_co2)  <br>
+  <h2>ANN Implementation in Python (using Keras)</h2>
+  <div class="code-block">
+    <pre><code>import numpy as np
+import pandas as pd
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import classification_report
 
+# Step 1: Generate a sample dataset
+X, y = make_classification(n_samples=1000, n_features=10, 
+                          n_informative=5, n_redundant=0, 
+                          n_classes=2, random_state=42)
 
-ANN Implementation in Python (using Keras)  <br>
-import numpy as np  <br>
-import pandas as pd  <br>
-from sklearn.datasets import make_classification  <br>
-from sklearn.model_selection import train_test_split  <br>
-from sklearn.preprocessing import StandardScaler  <br>
-from tensorflow.keras.models import Sequential  <br>
-from tensorflow.keras.layers import Dense  <br>
-from tensorflow.keras.optimizers import Adam  <br>
-from sklearn.metrics import classification_report  <br>
-# Step 1: Generate a sample dataset  <br>
-X, y = make_classification(n_samples=1000, n_features=10,  <br>
-n_informative=5, n_redundant=0,  <br>
-n_classes=2, random_state=42)  <br>
-# Step 2: Train-test split  <br>
-X_train, X_test, y_train, y_test = train_test_split(X, y,  <br>
-test_size=0.2,  <br>
-random_state=42)  <br>
-# Step 3: Feature scaling  <br>
-scaler = StandardScaler()  <br>
-X_train = scaler.fit_transform(X_train)  <br>
-X_test = scaler.transform(X_test)  <br>
-# Step 4: Build the ANN model  <br>
-model = Sequential()  <br>
-model.add(Dense(16, input_dim=10, activation='relu')) # hidden layer  <br>
-model.add(Dense(8, activation='relu'))  <br>
-# hidden layer  <br>
-model.add(Dense(1, activation='sigmoid'))  <br>
-# output layer  <br>
-# Step 5: Compile the model  <br>
-model.compile(optimizer=Adam(learning_rate=0.001),  <br>
-loss='binary_crossentropy',  <br>
-metrics=['accuracy'])  <br>
-# Step 6: Train the model  <br>
-model.fit(X_train, y_train, epochs=50, batch_size=16, verbose=1)  <br>
-# Step 7: Evaluate the model  <br>
-y_pred = (model.predict(X_test) > 0.5).astype("int32")  <br>
-print(classification_report(y_test, y_pred))  <br>
-<br>
-<br>
-import pandas as pd  <br>
-import numpy as np  <br>
-from sklearn.model_selection import train_test_split  <br>
-from sklearn.preprocessing import StandardScaler  <br>
-from tensorflow.keras.models import Sequential  <br>
-from tensorflow.keras.layers import Dense  <br>
-from tensorflow.keras.optimizers import Adam  <br>
-from sklearn.metrics import classification_report  <br>
-# Step 1: Load dataset  <br>
-url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-  <br>
-diabetes.data.csv"  <br>
-columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness',  <br>
-'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']  <br>
-data = pd.read_csv(url, header=None, names=columns)  <br>
-# Step 2: Split features and target  <br>
-X = data.iloc[:, :-1]  <br>
-y = data.iloc[:, -1]  <br>
-# Step 3: Train-test split  <br>
-X_train, X_test, y_train, y_test = train_test_split(X, y,  <br>
-test_size=0.2,  <br>
-random_state=42)  <br>
-# Step 4: Normalize features  <br>
-scaler = StandardScaler()  <br>
-X_train = scaler.fit_transform(X_train)  <br>
-X_test = scaler.transform(X_test)  <br>
-# Step 5: Build the ANN model  <br>
-model = Sequential()  <br>
-model.add(Dense(16, input_dim=8, activation='relu'))  <br>
-model.add(Dense(8, activation='relu'))  <br>
-model.add(Dense(1, activation='sigmoid'))  <br>
-# Step 6: Compile the model  <br>
-model.compile(optimizer=Adam(learning_rate=0.001),  <br>
-loss='binary_crossentropy',  <br>
-metrics=['accuracy'])  <br>
-# Step 7: Train the model  <br>
-model.fit(X_train, y_train, epochs=100, batch_size=10, verbose=1)  <br>
-# Step 8: Evaluate the model  <br>
-y_pred = (model.predict(X_test) > 0.5).astype("int32")  <br>
-print(classification_report(y_test, y_pred))  <br>
-pip install numpy pandas scikit-learn matplotlib seaborn  <br>
-<br>
-<br>
-Python Code: K-Means with Iris Dataset  <br>
-import numpy as np  <br>
-import pandas as pd  <br>
-import matplotlib.pyplot as plt  <br>
-import seaborn as sns  <br>
-from sklearn.datasets import load_iris  <br>
-from sklearn.cluster import KMeans  <br>
-from sklearn.metrics import confusion_matrix, accuracy_score  <br>
-from sklearn.decomposition import PCA  <br>
-# Step 1: Load the Iris dataset  <br>
-iris = load_iris()  <br>
-X = iris.data  <br>
-y = iris.target  <br>
-# Step 2: Apply K-Means clustering  <br>
-kmeans = KMeans(n_clusters=3, random_state=42)  <br>
-kmeans.fit(X)  <br>
-y_kmeans = kmeans.labels_  <br>
-# Step 3: Evaluate clustering with actual labels  <br>
-print("Confusion Matrix:")  <br>
-print(confusion_matrix(y, y_kmeans))  <br>
-# Sometimes labels need to be realigned to match original classes:  <br>
-# Example of mapping manually based on majority voting (only for evaluation)  <br>
-def relabel(preds):  <br>
-mapping = {0:1, 1:0, 2:2} # This mapping depends on cluster assignments  <br>
-return np.array([mapping[label] for label in preds])  <br>
-adjusted_preds = relabel(y_kmeans)  <br>
-print("\nAdjusted Accuracy:", accuracy_score(y, adjusted_preds))  <br>
-# Step 4: Visualize using PCA (for 2D plot)  <br>
-pca = PCA(n_components=2)  <br>
-X_pca = pca.fit_transform(X)  <br>
-plt.figure(figsize=(8, 6))  <br>
-sns.scatterplot(x=X_pca[:, 0], y=X_pca[:, 1], hue=y_kmeans, palette="Set1", s=100)  <br>
-plt.title("K-Means Clustering on Iris Dataset (PCA-reduced)")  <br>
-plt.xlabel("PCA Component 1")  <br>
-plt.ylabel("PCA Component 2")  <br>
-plt.legend(title="Cluster")  <br>
-plt.grid(True)  <br>
-plt.show()  <br>
-<br>
-Required Libraries:  <br>
-import numpy as np  <br>
-import matplotlib.pyplot as plt  <br>
-from sklearn.datasets import make_blobs  <br>
-from sklearn.cluster import KMeans  <br>
-from sklearn.decomposition import PCA  <br>
-from sklearn.metrics import silhouette_score, adjusted_rand_score  <br>
-Step 1: Generate Synthetic Data  <br>
-# Generate 4-cluster synthetic data  <br>
-X, y_true = make_blobs(n_samples=1000, centers=4, cluster_std=0.60, random_state=42)  <br>
-print(f"Data shape: {X.shape}")  <br>
-Step 2: Apply K-Means Clustering  <br>
-# Apply K-Means with 4 clusters  <br>
-kmeans = KMeans(n_clusters=4, random_state=42, n_init='auto')  <br>
-y_kmeans = kmeans.fit_predict(X)  <br>
-# Cluster centers  <br>
-centers = kmeans.cluster_centers_  <br>
-Step 3: Evaluate Clustering  <br>
-# Silhouette Score (higher is better, max = 1)  <br>
-silhouette = silhouette_score(X, y_kmeans)  <br>
-print(f"Silhouette Score: {silhouette:.4f}")  <br>
-# Adjusted Rand Index (compares with ground truth)  <br>
-ari = adjusted_rand_score(y_true, y_kmeans)  <br>
-print(f"Adjusted Rand Index: {ari:.4f}")  <br>
-Step 4: Visualize Using PCA  <br>
-# Reduce dimensions for plotting  <br>
-pca = PCA(n_components=2)  <br>
-X_pca = pca.fit_transform(X)  <br>
-centers_pca = pca.transform(centers)  <br>
-# Plot  <br>
-plt.figure(figsize=(8, 6))  <br>
-plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y_kmeans, cmap='viridis', s=30)  <br>
-plt.scatter(centers_pca[:, 0], centers_pca[:, 1], c='red', s=200, alpha=0.75, marker='X',  <br>
-label='Centers')  <br>
-plt.title('K-Means Clustering (PCA Visualization)')  <br>
-plt.xlabel('PCA Component 1')  <br>
-plt.ylabel('PCA Component 2')  <br>
-plt.legend()  <br>
-plt.grid(True)  <br>
-plt.show()  <br>
-  </p>
+# Step 2: Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, 
+                                                  test_size=0.2, 
+                                                  random_state=42)
+
+# Step 3: Feature scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 4: Build the ANN model
+model = Sequential()
+model.add(Dense(16, input_dim=10, activation='relu'))  # hidden layer
+model.add(Dense(8, activation='relu'))                 # hidden layer
+model.add(Dense(1, activation='sigmoid'))              # output layer
+
+# Step 5: Compile the model
+model.compile(optimizer=Adam(learning_rate=0.001),
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+
+# Step 6: Train the model
+model.fit(X_train, y_train, epochs=50, batch_size=16, verbose=1)
+
+# Step 7: Evaluate the model
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+print(classification_report(y_test, y_pred))</code></pre>
+  </div>
+
+  <h2>Diabetes Prediction ANN</h2>
+  <div class="code-block">
+    <pre><code>import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import classification_report
+
+# Step 1: Load dataset
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness',
+           'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
+data = pd.read_csv(url, header=None, names=columns)
+
+# Step 2: Split features and target
+X = data.iloc[:, :-1]
+y = data.iloc[:, -1]
+
+# Step 3: Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, 
+                                                  test_size=0.2, 
+                                                  random_state=42)
+
+# Step 4: Normalize features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 5: Build the ANN model
+model = Sequential()
+model.add(Dense(16, input_dim=8, activation='relu'))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+# Step 6: Compile the model
+model.compile(optimizer=Adam(learning_rate=0.001),
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+
+# Step 7: Train the model
+model.fit(X_train, y_train, epochs=100, batch_size=10, verbose=1)
+
+# Step 8: Evaluate the model
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+print(classification_report(y_test, y_pred))</code></pre>
+  </div>
+
+  <h2>K-Means with Iris Dataset</h2>
+  <div class="code-block">
+    <pre><code>import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.datasets import load_iris
+from sklearn.cluster import KMeans
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.decomposition import PCA
+
+# Step 1: Load the Iris dataset
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+# Step 2: Apply K-Means clustering
+kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans.fit(X)
+y_kmeans = kmeans.labels_
+
+# Step 3: Evaluate clustering with actual labels
+print("Confusion Matrix:")
+print(confusion_matrix(y, y_kmeans))
+
+# Sometimes labels need to be realigned to match original classes:
+# Example of mapping manually based on majority voting (only for evaluation)
+def relabel(preds):
+    mapping = {0:1, 1:0, 2:2}  # This mapping depends on cluster assignments
+    return np.array([mapping[label] for label in preds])
+
+adjusted_preds = relabel(y_kmeans)
+print("\nAdjusted Accuracy:", accuracy_score(y, adjusted_preds))
+
+# Step 4: Visualize using PCA (for 2D plot)
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X)
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=X_pca[:, 0], y=X_pca[:, 1], hue=y_kmeans, palette="Set1", s=100)
+plt.title("K-Means Clustering on Iris Dataset (PCA-reduced)")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.legend(title="Cluster")
+plt.grid(True)
+plt.show()</code></pre>
+  </div>
+
+  <h2>K-Means with Synthetic Data</h2>
+  <div class="code-block">
+    <pre><code>import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score, adjusted_rand_score
+
+# Step 1: Generate Synthetic Data
+# Generate 4-cluster synthetic data
+X, y_true = make_blobs(n_samples=1000, centers=4, cluster_std=0.60, random_state=42)
+print(f"Data shape: {X.shape}")
+
+# Step 2: Apply K-Means Clustering
+# Apply K-Means with 4 clusters
+kmeans = KMeans(n_clusters=4, random_state=42, n_init='auto')
+y_kmeans = kmeans.fit_predict(X)
+# Cluster centers
+centers = kmeans.cluster_centers_
+
+# Step 3: Evaluate Clustering
+# Silhouette Score (higher is better, max = 1)
+silhouette = silhouette_score(X, y_kmeans)
+print(f"Silhouette Score: {silhouette:.4f}")
+# Adjusted Rand Index (compares with ground truth)
+ari = adjusted_rand_score(y_true, y_kmeans)
+print(f"Adjusted Rand Index: {ari:.4f}")
+
+# Step 4: Visualize Using PCA
+# Reduce dimensions for plotting
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X)
+centers_pca = pca.transform(centers)
+
+# Plot
+plt.figure(figsize=(8, 6))
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y_kmeans, cmap='viridis', s=30)
+plt.scatter(centers_pca[:, 0], centers_pca[:, 1], c='red', s=200, alpha=0.75, marker='X', 
+           label='Centers')
+plt.title('K-Means Clustering (PCA Visualization)')
+plt.xlabel('PCA Component 1')
+plt.ylabel('PCA Component 2')
+plt.legend()
+plt.grid(True)
+plt.show()</code></pre>
+  </div>
+
   <script>
-  window.addEventListener('DOMContentLoaded', function() {
-    var text = document.body.innerText;
-    navigator.clipboard.writeText(text).catch(function(err) {
-      // Clipboard API may not be available or user denied permission
-      console.error('Clipboard write failed:', err);
+    window.addEventListener('DOMContentLoaded', function() {
+      // Copy all code blocks to clipboard
+      const codeBlocks = document.querySelectorAll('pre code');
+      let allCode = '';
+      
+      codeBlocks.forEach(block => {
+        allCode += block.textContent + '\n\n';
+      });
+      
+      navigator.clipboard.writeText(allCode).catch(function(err) {
+        console.error('Clipboard write failed:', err);
+      });
     });
-  });
   </script>
 </body>
 </html>
