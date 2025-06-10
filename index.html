@@ -698,6 +698,441 @@ public class UniStudent extends Student implements Externalizable {
           
   </div>
 
+  <div class="code-block">
+
+    <h2>Java Hibernate Library Management System - ORM</h2>
+    <h3>Entity Classes</h3>
+
+    <h3>Author.java</h3> 
+
+    package entity;
+
+import jakarta.persistence.*;
+import java.util.List;
+
+@Entity
+@Table(name = "author")
+public class Author {
+    @Id
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(name = "name")
+    private String authorName;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "contact")
+    private String contactNumber;
+
+    @OneToMany(mappedBy = "author", cascade = {
+        CascadeType.PERSIST, 
+        CascadeType.MERGE, 
+        CascadeType.DETACH, 
+        CascadeType.REFRESH
+    })
+    private List<Book> bookList;
+
+    // Constructors
+    public Author() {}
+
+    public Author(int id, String authorName, String email, String contactNumber) {
+        this.id = id;
+        this.authorName = authorName;
+        this.email = email;
+        this.contactNumber = contactNumber;
+    }
+
+    // Getters and Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getContactNumber() { return contactNumber; }
+    public void setContactNumber(String contactNumber) { this.contactNumber = contactNumber; }
+    public List<Book> getBookList() { return bookList; }
+    public void setBookList(List<Book> bookList) { this.bookList = bookList; }
+}
+
+      <h3>Book.java</h3> 
+
+      package entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "book")
+public class Book {
+    @Id
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(name = "title", unique = true)
+    private String title;
+
+    @Column(name = "isbn", unique = true)
+    private long ISBN;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "author_id")
+    private Author author;
+
+    // Constructors
+    public Book() {}
+
+    public Book(int id, String title, long ISBN) {
+        this.id = id;
+        this.title = title;
+        this.ISBN = ISBN;
+    }
+
+    // Getters and Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public long getISBN() { return ISBN; }
+    public void setISBN(long ISBN) { this.ISBN = ISBN; }
+    public Author getAuthor() { return author; }
+    public void setAuthor(Author author) { this.author = author; }
+}
+
+      <h3>Hibernate Configuration</h3>
+
+      <h3>HibernateUtilService.java</h3>
+
+      package hibernateUtil;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+
+public class HibernateUtilService {
+    private static StandardServiceRegistry registry;
+    private static SessionFactory sessionFactory;
+
+    public static SessionFactory getSessionFactory() {
+        try {
+            if (sessionFactory == null) {
+                registry = new StandardServiceRegistryBuilder().configure().build();
+                MetadataSources metadataSources = new MetadataSources(registry);
+                Metadata metadata = metadataSources.getMetadataBuilder().build();
+                sessionFactory = metadata.getSessionFactoryBuilder().build();
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            if (registry != null) {
+                StandardServiceRegistryBuilder.destroy(registry);
+            }
+        }
+        return sessionFactory;
+    }
+
+    public static void shutdown() {
+        if (registry != null) {
+            StandardServiceRegistryBuilder.destroy(registry);
+        }
+    }
+}
+
+      <h3>Service Layer</h3>
+      <h3>ManageLibrary.java</h3>
+
+      package service;
+
+import entity.Author;
+import entity.Book;
+import hibernateUtil.HibernateUtilService;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+import java.util.List;
+import java.util.Scanner;
+
+public class ManageLibrary {
+    private Scanner scanner;
+
+    public void addNewBook() {
+        Book book = new Book();
+        Author author = new Author();
+
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Book Title: ");
+        book.setTitle(scanner.nextLine());
+
+        scanner = new Scanner(System.in);
+        System.out.print("Enter ISBN Number: ");
+        book.setISBN(scanner.nextLong());
+
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Author Name: ");
+        author.setAuthorName(scanner.nextLine());
+
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Email: ");
+        author.setEmail(scanner.nextLine());
+
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Contact Number: ");
+        author.setContactNumber(scanner.nextLine());
+
+        book.setAuthor(author);
+
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.persist(book);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public Book getBookDetailsByTitle() {
+        Book book = null;
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Book Title For Search: ");
+        String title = scanner.nextLine();
+
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            String hql = "FROM Book WHERE title = :title";
+            Query<Book> query = session.createQuery(hql, Book.class);
+            query.setParameter("title", title);
+            book = query.uniqueResult();
+            transaction.commit();
+        }
+        return book;
+    }
+
+    public Book getBookDetailsByISBN() {
+        Book book = null;
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Book ISBN Number For Search: ");
+        long ISBN = scanner.nextLong();
+
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            String hql = "FROM Book WHERE ISBN = :ISBN";
+            Query<Book> query = session.createQuery(hql, Book.class);
+            query.setParameter("ISBN", ISBN);
+            book = query.uniqueResult();
+            transaction.commit();
+        }
+        return book;
+    }
+
+    public List<Book> getBookDetailsByAuthorName() {
+        List<Book> books = null;
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Author Name For Search: ");
+        String authorName = scanner.nextLine();
+
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            String hql = "FROM Book b JOIN FETCH b.author a WHERE a.authorName = :authorName";
+            Query<Book> query = session.createQuery(hql, Book.class);
+            query.setParameter("authorName", authorName);
+            books = query.getResultList();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            System.out.println(e.getMessage());
+        }
+        return books;
+    }
+
+    public List<Book> getAllBooks() {
+        List<Book> books = null;
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Query<Book> query = session.createQuery("SELECT b FROM Book b", Book.class);
+            books = query.getResultList();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            System.out.println(e.getMessage());
+        }
+        return books;
+    }
+
+    public List<Author> getAllAuthors() {
+        List<Author> authors = null;
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Query<Author> query = session.createQuery("SELECT a FROM Author a", Author.class);
+            authors = query.getResultList();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            System.out.println(e.getMessage());
+        }
+        return authors;
+    }
+
+    public void deleteBook() {
+        scanner = new Scanner(System.in);
+        System.out.print("Enter Book Id For Deletion: ");
+        int id = scanner.nextInt();
+
+        Transaction transaction = null;
+        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Book book = session.find(Book.class, id);
+            if (book == null) {
+                System.out.println("Invalid Book ID");
+                return;
+            } else {
+                session.remove(book);
+                System.out.println("Successfully Deleted....");
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            System.out.println(e.getMessage());
+        }
+    }
+}
+          <h3>Main Application</h3>
+          <h3>Run.java</h3>
+
+              import entity.Author;
+import entity.Book;
+import service.ManageLibrary;
+import java.util.List;
+import java.util.Scanner;
+
+public class Run {
+    static Scanner scanner;
+
+    public static void main(String[] args) {
+        int choice;
+        ManageLibrary manageLibrary = new ManageLibrary();
+        Book book;
+        Author author;
+        List<Book> bookList;
+        List<Author> authorList;
+
+        while (true) {
+            System.out.println("\n***Menu***");
+            System.out.println("[1] Add New Book Details");
+            System.out.println("[2] Search By Title");
+            System.out.println("[3] Search By ISBN");
+            System.out.println("[4] Search By Author Name");
+            System.out.println("[5] List All Books");
+            System.out.println("[6] List All Authors");
+            System.out.println("[7] Delete Book");
+            System.out.println("[8] Exit");
+
+            scanner = new Scanner(System.in);
+            System.out.print("Enter Your Choice: ");
+            choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    manageLibrary.addNewBook();
+                    break;
+                case 2:
+                    book = manageLibrary.getBookDetailsByTitle();
+                    if (book == null) {
+                        System.out.println("No books found with given title");
+                    } else {
+                        printBookDetails(book);
+                    }
+                    break;
+                case 3:
+                    book = manageLibrary.getBookDetailsByISBN();
+                    if (book == null) {
+                        System.out.println("No books found with given ISBN");
+                    } else {
+                        printBookDetails(book);
+                    }
+                    break;
+                case 4:
+                    bookList = manageLibrary.getBookDetailsByAuthorName();
+                    if (bookList.isEmpty()) {
+                        System.out.println("No books found for given author");
+                    } else {
+                        for (Book b : bookList) {
+                            printBookDetails(b);
+                        }
+                    }
+                    break;
+                case 5:
+                    bookList = manageLibrary.getAllBooks();
+                    if (bookList.isEmpty()) {
+                        System.out.println("No books in the library");
+                    } else {
+                        for (Book b : bookList) {
+                            printBookDetails(b);
+                        }
+                    }
+                    break;
+                case 6:
+                    authorList = manageLibrary.getAllAuthors();
+                    if (authorList.isEmpty()) {
+                        System.out.println("No authors in the system");
+                    } else {
+                        for (Author a : authorList) {
+                            System.out.println("***Author Details***");
+                            System.out.println("Author Id: " + a.getId());
+                            System.out.println("Author Name: " + a.getAuthorName());
+                            System.out.println("Author Email: " + a.getEmail());
+                            System.out.println("Author Contact Number: " + a.getContactNumber() + "\n");
+                        }
+                    }
+                    break;
+                case 7:
+                    manageLibrary.deleteBook();
+                    break;
+                case 8:
+                    HibernateUtilService.shutdown();
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Invalid Input...");
+                    break;
+            }
+        }
+    }
+
+    private static void printBookDetails(Book book) {
+        System.out.println("***Book Details***");
+        System.out.println("Book Id: " + book.getId());
+        System.out.println("Book Title: " + book.getTitle());
+        System.out.println("Book ISBN Number: " + book.getISBN());
+        System.out.println("Author Id: " + book.getAuthor().getId());
+        System.out.println("Author Name: " + book.getAuthor().getAuthorName());
+        System.out.println("Author Email: " + book.getAuthor().getEmail());
+        System.out.println("Author Contact Number: " + book.getAuthor().getContactNumber() + "\n");
+    }
+}
+
+    </div>
+
 
 </code></pre>
   <script>
