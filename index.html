@@ -1133,6 +1133,278 @@ public class Run {
 
     </div>
 
+    <div class="code-block">
+
+    <h2>Java Thread Synchronization</h2>
+    <h3>1. Bank Account Transaction System</h3>
+
+    <h3>Account.java</h3>
+
+      package bankAccount;
+
+public class Account {
+    private double balance;
+
+    public Account(double balance) {
+        this.balance = balance;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+
+    public synchronized void deposit(double amount) {
+        balance = balance + amount;
+        setBalance(balance);
+        System.out.println("Deposited " + amount + " New Balance " + getBalance());
+    }
+
+    public synchronized void withdrawal(double amount) {
+        if (balance >= amount) {
+            balance = balance - amount;
+            setBalance(balance);
+            System.out.println("Withdraw " + amount + " New Balance " + getBalance());
+        } else {
+            System.out.println("Insufficient Funds. Available Balance " + getBalance());
+        }
+    }
+}
+
+      <h3>BankTransaction.java</h3>
+
+      package bankAccount;
+
+public class BankTransaction {
+    private String transactionId;
+    private double amount;
+    private Account account;
+    private String type;
+
+    public BankTransaction(String transactionId, double amount, Account account, String type) {
+        this.transactionId = transactionId;
+        this.amount = amount;
+        this.account = account;
+        this.type = type;
+    }
+
+    // Getters and Setters
+    public String getTransactionId() { return transactionId; }
+    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
+    public Account getAccount() { return account; }
+    public void setAccount(Account account) { this.account = account; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+}
+
+      <h3>HandleTransaction.java</h3>
+
+      package bankAccount;
+
+public class HandleTransaction implements Runnable {
+    private BankTransaction bankTransaction;
+
+    public HandleTransaction(BankTransaction bankTransaction) {
+        this.bankTransaction = bankTransaction;
+    }
+
+    @Override
+    public void run() {
+        synchronized (bankTransaction.getAccount()) {
+            processTransaction();
+        }
+    }
+
+    private void processTransaction() {
+        System.out.println("Processing Transaction..." + bankTransaction.getTransactionId());
+
+        try {
+            Thread.sleep(1000);
+            if (bankTransaction.getType().equals("deposit")) {
+                bankTransaction.getAccount().deposit(bankTransaction.getAmount());
+            } else if (bankTransaction.getType().equals("withdrawal")) {
+                bankTransaction.getAccount().withdrawal(bankTransaction.getAmount());
+            } else {
+                System.out.println("Unknown transaction type: " + bankTransaction.getType());
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println("Transaction processing interrupted: " + bankTransaction.getTransactionId());
+        }
+
+        System.out.println("Transaction processed: " + bankTransaction.getTransactionId());
+    }
+
+    // Getters and Setters
+    public BankTransaction getBankTransaction() { return bankTransaction; }
+    public void setBankTransaction(BankTransaction bankTransaction) { this.bankTransaction = bankTransaction; }
+}
+
+      <h3>RunDemo.java</h3>
+
+      package bankAccount;
+
+public class RunDemo {
+    public static void main(String[] args) {
+        Account account = new Account(10000);
+
+        BankTransaction bankTransaction1 = new BankTransaction("00001", 2500, account, "deposit");
+        BankTransaction bankTransaction2 = new BankTransaction("00002", 7000, account, "withdrawal");
+        BankTransaction bankTransaction3 = new BankTransaction("00003", 2500, account, "deposit");
+
+        HandleTransaction handleTransaction1 = new HandleTransaction(bankTransaction1);
+        HandleTransaction handleTransaction2 = new HandleTransaction(bankTransaction2);
+        HandleTransaction handleTransaction3 = new HandleTransaction(bankTransaction3);
+
+        Thread thread1 = new Thread(handleTransaction1);
+        Thread thread2 = new Thread(handleTransaction2);
+        Thread thread3 = new Thread(handleTransaction3);
+
+        thread1.start();
+        thread2.start();
+        thread3.start();
+    }
+}
+      <h3>2. Producer-Consumer Pattern Implementation</h3>
+
+      <h3>ShareMessage.java</h3>
+
+      package producerConsumer;
+
+public class ShareMessage {
+    private final int bufferSize;
+    private int index = -1;
+    private final String[] messages;
+
+    public ShareMessage(int bufferSize) {
+        this.bufferSize = bufferSize;
+        messages = new String[bufferSize];
+    }
+
+    public synchronized void produce(String message) {
+        String currentThreadName = Thread.currentThread().getName();
+
+        ++index;
+        messages[index] = message;
+        System.out.println("New Message is Produced...." + message);
+        notifyAll();
+
+        while (this.index == bufferSize - 1) {
+            try {
+                System.out.println(currentThreadName + " Buffer is Full waiting for Consumed...");
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public synchronized String consume() {
+        String currentThreadName = Thread.currentThread().getName();
+
+        while (this.index == -1) {
+            System.out.println(currentThreadName + " Buffer is Empty waiting for Produce...");
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        String m = messages[this.index];
+        --index;
+        notifyAll();
+        return m;
+    }
+}
+
+      <h3>MessageProduceHandle.java</h3>
+
+      package producerConsumer;
+
+import java.util.Scanner;
+
+public class MessageProduceHandle implements Runnable {
+    private final ShareMessage shareMessage;
+
+    public MessageProduceHandle(ShareMessage shareMessage) {
+        this.shareMessage = shareMessage;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            synchronized (shareMessage) {
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("Enter Message:");
+                String m = scanner.nextLine();
+                if (m.equals("bye")) {
+                    System.exit(0);
+                } else {
+                    try {
+                        Thread.sleep(1000);
+                        shareMessage.produce(m);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+    }
+}
+      <h3>MessageConsumeHandle.java</h3>
+
+      package producerConsumer;
+
+public class MessageConsumeHandle implements Runnable {
+    private final ShareMessage shareMessage;
+
+    public MessageConsumeHandle(ShareMessage shareMessage) {
+        this.shareMessage = shareMessage;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            synchronized (shareMessage) {
+                try {
+                    Thread.sleep(500);
+                    String message = shareMessage.consume();
+                    System.out.println("Consumed Message: " + message);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+}
+
+      <h3>RunMessageProgram.java</h3>
+
+      package producerConsumer;
+
+public class RunMessageProgram {
+    public static void main(String[] args) {
+        ShareMessage shareMessage = new ShareMessage(1);
+
+        Thread thread = new Thread(new MessageProduceHandle(shareMessage));
+        Thread thread1 = new Thread(new MessageConsumeHandle(shareMessage));
+        thread.setName("Producer");
+        thread1.setName("Consumer");
+
+        thread.start();
+        thread1.start();
+    }
+}
+
+    </div>
+      
+
 
 </code></pre>
   <script>
