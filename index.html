@@ -34,964 +34,410 @@
 <body>
   <pre><code>
     
-    <div class="code-block">
-     
-    <h2>Breadth-First Search (BFS) </br>
-    BFS Implementation 1</h2>
+  <div class="code-block">
 
-graph = {
-    '5': ['3', '7'],
-    '3': ['2', '4'],
-    '7': ['8'],
-    '2': [],
-    '4': ['8'],
-    '8': []
-}
+    <h2>Chat Application</h2>
+    <h3>1. One-time Chat Implementation</h3>
 
-visited = [] # List for visited nodes
-queue = []   # Initialize a queue
+    <h3>OneChatServer.java</h3>    
 
-def bfs(visited, graph, node):
-    visited.append(node)
-    queue.append(node)
-    
-    while queue:          # Loop to visit each node
-        m = queue.pop(0)
-        print(m, end=" ")
-        
-        for neighbour in graph[m]:
-            if neighbour not in visited:
-                visited.append(neighbour)
-                queue.append(neighbour)
+    import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-# Driver Code
-print("Following is the Breadth-First Search")
-bfs(visited, graph, '5')
-
-    </div>
-
-
-    <div class="code-block">
-      
-    <h2>BFS Implementation 2 (using collections.deque)</h2>
-
-import collections
-
-def bfs(graph, root):
-    visited, queue = set(), collections.deque([root])
-    visited.add(root)
-    
-    while queue:
-        vertex = queue.popleft()
-        print(str(vertex) + " ", end="")
-        
-        for neighbour in graph[vertex]:
-            if neighbour not in visited:
-                visited.add(neighbour)
-                queue.append(neighbour)
-
-if __name__ == '__main__':
-    graph = {0: [1, 2], 1: [2], 2: [3], 3: [1, 2]}
-    print("Following is Breadth First Traversal: ")
-    bfs(graph, 0)
-
-    </div>
-
-<div class="code-block">
-      
-    <h2>Depth-First Search (DFS) </br>
-    DFS Implementation 1</h2>
-
-graph = {
-    '5': ['3','7'],
-    '3': ['2', '4'],
-    '7': ['8'],
-    '2': [],
-    '4': ['8'],
-    '8': []
-}
-
-visited = set() # Set to keep track of visited nodes
-
-def dfs(visited, graph, node):
-    if node not in visited:
-        print(node)
-        visited.add(node)
-        for neighbour in graph[node]:
-            dfs(visited, graph, neighbour)
-
-# Driver Code
-print("Following is the Depth-First Search")
-dfs(visited, graph, '5')
-    </div>
-
-
-<div class="code-block">
-      
-    <h2>Depth-First Search (DFS) </br>
-    DFS Implementation 2</h2>
-
-def dfs(graph, start, visited=None):
-    if visited is None:
-        visited = set()
-    visited.add(start)
-    print(start)
-    
-    for next in graph[start] - visited:
-        dfs(graph, next, visited)
-    return visited
-
-graph = {
-    '0': set(['1', '2']),
-    '1': set(['0', '3', '4']),
-    '2': set(['0']),
-    '3': set(['1']),
-    '4': set(['2', '3'])
-}
-
-dfs(graph, '0')
-    </div>
-
-
-<div class="code-block">
-      
-    <h2>Best-First Search</h2>
-
-from queue import PriorityQueue
-
-v = 14
-graph = [[] for i in range(v)]
-
-def best_first_search(actual_src, target, n):
-    visited = [False] * n
-    pq = PriorityQueue()
-    pq.put((0, actual_src))
-    visited[actual_src] = True
-    
-    while pq.empty() == False:
-        u = pq.get()[1]
-        print(u, end=" ")
-        if u == target:
-            break
+public class OneChatServer {
+    public static void main(String[] args) {
+        try {
+            // Create server socket on port 1111
+            ServerSocket serverSocket = new ServerSocket(1111);
             
-        for v, c in graph[u]:
-            if visited[v] == False:
-                visited[v] = True
-                pq.put((c, v))
-    print()
+            // Wait for client connection
+            Socket socket = serverSocket.accept();
+            
+            // Read message from client
+            DataInputStream ReadClientMessage = new DataInputStream(socket.getInputStream());
+            String clientMessage = ReadClientMessage.readUTF();
+            System.out.println(clientMessage);
+            
+            // Send response to client
+            DataOutputStream writeToClient = new DataOutputStream(socket.getOutputStream());
+            writeToClient.writeUTF("Hello Client");
+            writeToClient.flush();
+            
+            // Close connections
+            socket.close();
+            serverSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
 
-def addedge(x, y, cost):
-    graph[x].append((y, cost))
-    graph[y].append((x, cost))
+    <h3>OneChatClient.java</h3> 
 
-# Add edges
-addedge(0, 1, 3)
-addedge(0, 2, 6)
-addedge(0, 3, 5)
-addedge(1, 4, 9)
-addedge(1, 5, 8)
-addedge(2, 6, 12)
-addedge(2, 7, 14)
-addedge(3, 8, 7)
-addedge(8, 9, 5)
-addedge(8, 10, 6)
-addedge(9, 11, 1)
-addedge(9, 12, 10)
-addedge(9, 13, 2)
+    import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
 
-source = 0
-target = 9
-best_first_search(source, target, v)
-    </div>
+public class OneChatClient {
+    public static void main(String[] args) {
+        try {
+            // Connect to server on localhost:1111
+            Socket socket = new Socket("localhost", 1111);
+            
+            // Send message to server
+            DataOutputStream writeToServer = new DataOutputStream(socket.getOutputStream());
+            writeToServer.writeUTF("Hello Server");
+            writeToServer.flush();
+            
+            // Read server response
+            DataInputStream ReadServerMessage = new DataInputStream(socket.getInputStream());
+            String clientMessage = ReadServerMessage.readUTF();
+            System.out.println(clientMessage);
+            
+            // Close connection
+            socket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
 
-<div class="code-block">
-      
-    <h2>Propositional Logic Functions</br>
-    Negation</h2>
+    <h3>2. Loop Chat Implementation</h3>
 
-def negation(p):
-    return not p
+    <h3>ChatLoopServer.java</h3>
 
-print("p  a")
-for p in [True, False]:
-    a = negation(p)
-    print(p, a)
-    </div>
+    import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-<div class="code-block">
-      
-    <h2>Conjunction</h2>
+public class ChatLoopServer {
+    public static void main(String[] args) {
+        try(ServerSocket serverSocket = new ServerSocket(1234)) {
+            System.out.println("Server started. Listening on port 1234..." + serverSocket);
+            
+            while (true) {
+                // Accept client connection
+                Socket socket = serverSocket.accept();
+                System.out.println("Client is Connected ...." + serverSocket);
+                
+                // Set up input/output streams
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                
+                String readClientMessage;
+                
+                while (true) {
+                    // Read client message
+                    readClientMessage = dataInputStream.readUTF();
+                    System.out.println("Client Says :" + readClientMessage);
+                    
+                    // Exit condition
+                    if(readClientMessage.equals("404")) {
+                        socket.close();
+                        serverSocket.close();
+                        System.out.println("Client disconnected: " + socket);
+                        System.exit(0);
+                        break;
+                    }
+                    
+                    // Get server input and send to client
+                    System.out.print("Server Write :");
+                    BufferedReader serverInput = new BufferedReader(new InputStreamReader(System.in));
+                    String serverMessage = serverInput.readLine();
+                    dataOutputStream.writeUTF(serverMessage);
+                    
+                    // Exit condition
+                    if(serverMessage.equals("404")) {
+                        dataOutputStream.flush();
+                        socket.close();
+                        serverSocket.close();
+                        System.exit(0);
+                        break;
+                    } else {
+                        dataOutputStream.flush();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+    <h3>ChatLoopClient.java</h3>
 
-def conjunction(p, q):
-    return p and q
+    import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.Socket;
 
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = conjunction(p, q)
-        print(p, q, a)
-</div>
-
-<div class="code-block">
-      
-    <h2>Disjunction</h2>
-
-def disjunction(p, q):
-    return p or q
-
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = disjunction(p, q)
-        print(p, q, a)
-</div>
-
-
-<div class="code-block">
-      
-    <h2>Exclusive Disjunction</h2>
-
-def exclusive_disjunction(p, q):
-    return (p and not q) or (not p and q)
-
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = exclusive_disjunction(p, q)
-        print(p, q, a)
-</div>
-
-
-<div class="code-block">
-      
-    <h2>Implication</h2>
-
-def implication(p, q):
-    return not p or q
-
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = implication(p, q)
-        print(p, q, a)
-</div>
-
-
-<div class="code-block">
-      
-    <h2>Bi-Implication</h2>
-
-def bi_implication(p, q):
-    return (p and q) or (not p and not q)
-
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = bi_implication(p, q)
-        print(p, q, a)
-</div>
-
-
-<div class="code-block">
-      
-    <h2>Compound Proposition: (p ∧ q) ∨ ¬q</h2>
-
-def conjunction(p, q):
-    return p and q
-
-def disjunction(p, q):
-    return p or q
-
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = disjunction(conjunction(p, q), not q)
-        print(p, q, a)
-</div>
-
-
-<div class="code-block">
-      
-    <h2>Compound Proposition: (p ∨ ¬q) ∧ ¬p</h2>
-
-def disjunction(p, q):
-    return p or q
-
-def conjunction(p, q):
-    return p and q
-
-print("p  q  a")
-for p in [True, False]:
-    for q in [True, False]:
-        a = conjunction(disjunction(p, not q), not p)
-        print(p, q, a)
-</div>
-
-
-<div class="code-block">
-      
-    <h2>Compound Proposition: (p ∧ q) ⇒ r</h2>
-
-def conjunction(p, q):
-    return p and q
-
-def implication(p, q):
-    return not p or q
-
-print("p q r a")
-for p in [True, False]:
-    for q in [True, False]:
-        for r in [True, False]:
-            a = implication(conjunction(p, q), r)
-            print(p, q, r, a)
-</div>
+public class ChatLoopClient {
+    public static void main(String[] args) {
+        try(Socket socket = new Socket("localhost", 1234)) {
+            System.out.println("Connected to server.");
+            
+            // Set up input/output streams
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+            BufferedReader clientInput = new BufferedReader(new InputStreamReader(System.in));
+            
+            String clientMessage;
+            while (true) {
+                // Get client input and send to server
+                System.out.println("Client Write :");
+                clientMessage = clientInput.readLine();
+                dataOutputStream.writeUTF(clientMessage);
+                
+                // Exit condition
+                if(clientMessage.equals("404")) {
+                    dataOutputStream.flush();
+                    socket.close();
+                    System.exit(0);
+                } else {
+                    dataOutputStream.flush();
+                }
+                
+                // Read server response
+                String readServerMessage = dataInputStream.readUTF();
+                System.out.println("Server Says :" + readServerMessage);
+                
+                // Exit condition
+                if(readServerMessage.equals("404")) {
+                    socket.close();
+                    System.out.println("Server disconnected: " + socket);
+                    System.exit(0);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
     
-     <p>////////////////////////////////////////////<br>
-        import numpy
-speed =
-[99,86,87,88,111,86,103,87,94,7
-8,77,85,86]
-x = numpy.mean(speed)
-x = numpy.median(speed)
-print(x)
 
-from scipy import stats
-speed
-= [99,86,87,88,111,86,103,87,94,78,
-77,85,86]
-x = stats.mode(speed)
-print(x)
+    <h3>3. Group Chat Implementation</h3>
 
-#standerd deviation
-import numpy
-speed = [86,87,88,86,87,85,86]
-x = numpy.std(speed)
-print(x)
+    <h3>ChatGroupServer.java</h3>
 
+    import java.net.ServerSocket;
+import java.net.Socket;
 
-Variance
-import numpy
-speed = [32,111,138,28,59,77,97]
-x = numpy.var(speed)
-print(x)
+public class ChatGroupServer {
+    private final ServerSocket serverSocket;
 
-#Percentiles
-import numpy
-ages
-= [5,31,43,48,50,41,7,11,15,39,80,82,32,2,8,6,25,36,
-27,61,31]
-x = numpy.percentile(ages, 75)
-print(x)
+    public ChatGroupServer(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+    }
 
+    public void startServer() {
+        try {
+            while (!serverSocket.isClosed()) {
+                // Wait for client connection
+                Socket socket = serverSocket.accept();
+                System.out.println("A New Client has Connected");
+                
+                // Create handler for the client
+                ChatGroupHandler chatGroupHandler = new ChatGroupHandler(socket);
+                
+                // Start handler thread
+                Thread thread = new Thread(chatGroupHandler);
+                thread.start();
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
-#Histograms
-import numpy
-import matplotlib.pyplot as plt
-x = numpy.random.uniform(0.0, 5.0, 250)
-plt.hist(x, 5)
-plt.show()
+    public static void main(String[] args) {
+        ServerSocket serverSocket = null;
+        try {
+            // Create server socket on port 1234
+            serverSocket = new ServerSocket(1234);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        
+        // Start server
+        ChatGroupServer chatGroupServer = new ChatGroupServer(serverSocket);
+        System.out.println("Start Server " + serverSocket);
+        chatGroupServer.startServer();
+    }
+}
 
-#Normal Data Distribution
-import numpy
-import matplotlib.pyplot as plt
-x = numpy.random.normal(5.0, 1.0, 100000)
-plt.hist(x, 100)
-plt.show()
+    <h3>ChatGroupHandler.java</h3>
 
-Scatter Plot
-import matplotlib.pyplot as plt
-x = [5,7,8,7,2,17,2,9,4,11,12,9,6]
-y = [99,86,87,88,111,86,103,87,94,78,77,85,86]
-plt.scatter(x, y)
-plt.show()
+    import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
 
-#linear regression
-import matplotlib.pyplot as plt
-x = [5,7,8,7,2,17,2,9,4,11,12,9,6]
-y = [99,86,87,88,111,86,103,87,94,78,77,85,86]
-plt.scatter(x, y)
-plt.show()
+public class ChatGroupHandler implements Runnable {
+    public static ArrayList<ChatGroupHandler> chatGroupHandlers = new ArrayList<>();
+    private Socket socket;
+    private DataInputStream dataInputStream;
+    private DataOutputStream dataOutputStream;
+    private String clientUserName;
 
+    public ChatGroupHandler(Socket socket) throws IOException {
+        this.socket = socket;
+        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        this.dataInputStream = new DataInputStream(socket.getInputStream());
+        this.clientUserName = dataInputStream.readUTF(); // Read username
+        chatGroupHandlers.add(this); // Add to handler list
+        broadcastMessage("Server Says " + clientUserName + " has entered the chat");
+    }
 
-import matplotlib.pyplot as plt
-from scipy import stats
-x = [5,7,8,7,2,17,2,9,4,11,12,9,6]
-y = [99,86,87,88,111,86,103,87,94,78,77,85,86]
-slope, intercept, r, p, std_err = stats.linregress(x, y)
-def myfunc(x):
-return slope * x + intercept
-mymodel = list(map(myfunc, x))
-plt.scatter(x, y)
-plt.plot(x, mymodel)
-plt.show()
+    public void closeUtils(Socket socket, DataOutputStream dataOutputStream, 
+                          DataInputStream dataInputStream) throws IOException {
+        removeClientHandler();
+        socket.close();
+        dataOutputStream.close();
+        dataInputStream.close();
+    }
 
+    @Override
+    public void run() {
+        String messageFromClient;
+        while (socket.isConnected()) {
+            try {
+                messageFromClient = dataInputStream.readUTF();
+                broadcastMessage(messageFromClient); // Broadcast to all clients
+            } catch (Exception e) {
+                try {
+                    closeUtils(socket, dataOutputStream, dataInputStream);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+    }
 
-from scipy import stats
-x = [5,7,8,7,2,17,2,9,4,11,12,9,6]
-y = [99,86,87,88,111,86,103,87,94,78,77,85,86]
-slope, intercept, r, p, std_err =
-stats.linregress(x, y)
-print(r)
+    public void broadcastMessage(String messageToSend) {
+        for(ChatGroupHandler chatGroupHandler : chatGroupHandlers) {
+            if(!chatGroupHandler.clientUserName.equals(clientUserName)) {
+                try {
+                    chatGroupHandler.dataOutputStream.writeUTF(messageToSend);
+                    chatGroupHandler.dataOutputStream.flush();
+                } catch (IOException e) {
+                    try {
+                        closeUtils(socket, dataOutputStream, dataInputStream);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
 
+    public void removeClientHandler() {
+        chatGroupHandlers.remove(this);
+        broadcastMessage("Server Says: " + clientUserName + " has left the chat");
+    }
+}
 
-from scipy import stats
-x = [5,7,8,7,2,17,2,9,4,11,12,9,6]
-y = [99,86,87,88,111,86,103,87,94,78,77,85,86]
-slope, intercept, r, p, std_err = stats.linregress(x, y)
-def myfunc(x):
-return slope * x + intercept
-speed = myfunc(10)
-print(speed)
+    <h3>ChatGroupClient.java</h3>
 
+      import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Scanner;
 
-Multiple Regression
-import pandas
-from sklearn import linear_model
-df = pandas.read_csv("data.csv")
-X = df[['Weight', 'Volume']]
-y = df['CO2']
-regr = linear_model.LinearRegression()
-regr.fit(X, y)
-#predict the CO2 emission of a car where the weight
-is 2300kg, and the volume is 1300cm3:
-predictedCO2 = regr.predict([[2300, 1300]])
-print(predictedCO2)
+public class ChatGroupClient {
+    private Socket socket;
+    private DataInputStream dataInputStream;
+    private DataOutputStream dataOutputStream;
+    private String uname;
 
+    public ChatGroupClient(Socket socket, String uname) throws IOException {
+        this.socket = socket;
+        this.uname = uname;
+        this.dataInputStream = new DataInputStream(socket.getInputStream());
+        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+    }
 
-Coefficient
-import pandas
-from sklearn import linear_model
-df = pandas.read_csv("data.csv")
-X = df[['Weight', 'Volume']]
-y = df['CO2']
-regr = linear_model.LinearRegression()
-regr.fit(X, y)
-print(regr.coef_)
+    public void sendMessage() throws IOException {
+        try {
+            dataOutputStream.writeUTF(uname);
+            dataOutputStream.flush();
 
-import pandas
-from sklearn import linear_model
-df = pandas.read_csv("data.csv")
-X = df[['Weight', 'Volume']]
-y = df['CO2']
-regr = linear_model.LinearRegression()
-regr.fit(X, y)
-predictedCO2 = regr.predict([[3300, 1300]])
-print(predictedCO2)
+            Scanner scanner = new Scanner(System.in);
+            while (socket.isConnected()) {
+                String messageToSend = scanner.nextLine();
+                dataOutputStream.writeUTF(uname + " " + messageToSend);
+                dataOutputStream.flush();
+            }
+        } catch (IOException e) {
+            closeUtils(socket, dataOutputStream, dataInputStream);
+            throw new RuntimeException(e);
+        }
+    }
 
-# Page 42
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn import linear_model
+    public void closeUtils(Socket socket, DataOutputStream dataOutputStream, 
+                          DataInputStream dataInputStream) throws IOException {
+        socket.close();
+        dataOutputStream.close();
+        dataInputStream.close();
+    }
 
-# Read csv file :
-data = pd.read_csv("Fuel.csv")
-data.head()
+    public void listenMessage() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String messageFromServer;
+                while (socket.isConnected()) {
+                    try {
+                        messageFromServer = dataInputStream.readUTF();
+                        System.out.println(messageFromServer);
+                    } catch (IOException e) {
+                        try {
+                            closeUtils(socket, dataOutputStream, dataInputStream);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }).start();
+    }
 
-#Let's select some features to explore more :
-data = data[["ENGINESIZE", "CO2EMISSIONS"]]
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your username for the group chat:");
+        String username = scanner.nextLine();
 
-# Page 43
-# ENGINESIZE vs CO2EMISSIONS :
-plt.scatter(data["ENGINESIZE"], data["CO2EMISSIONS"], color="blue")
-plt.xlabel("ENGINESIZE")
-plt.ylabel("CO2EMISSIONS")
-plt.show()
+        Socket socket;
+        try {
+            socket = new Socket("localhost", 1234);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-# Generating training and testing data from our data :
-# We are using 80% data for training.
-train = data[:(int((len(data)*0.8)))]
-test = data[(int((len(data)*0.8))):]
+        try {
+            ChatGroupClient chatGroupClient = new ChatGroupClient(socket, username);
+            chatGroupClient.listenMessage();
+            chatGroupClient.sendMessage();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
 
-# Page 44
-#Modeling :
-#Using sklearn package to model data :
-from sklearn import linear_model
-regr = linear_model.LinearRegression()
-
-train_x = np.array(train[["ENGINESIZE"]])
-train_y = np.array(train[["CO2EMISSIONS"]])
-
-regr.fit(train_x,train_y)
-
-#The coefficients :
-print ("coefficients : ",regr.coef_)    #Slope
-print ("Intercept : ",regr.intercept_)    #Intercept
-
-# Page 45
-# Plotting the regression line :
-plt.scatter(train["ENGINESIZE"], train["CO2EMISSIONS"], color='blue')
-plt.plot(train_x, regr.coef_*train_x + regr.intercept_, '-r')
-plt.xlabel("Engine size")
-plt.ylabel("Emission")
-
-# Predicting values :
-# Function for predicting future values :
-def get_regression_predictions(input_features,intercept,slope):
-    predicted_values = input_features*slope + intercept
-    return predicted_values
-
-# Page 46
-# Predicting emission for future car :
-my_engine_size = 3.5
-estimated_emission = get_regression_predictions(my_engine_size,regr.intercept_[0],regr.coef_[0][0])
-print ("Estimated Emission :",estimated_emission)
-
-# Checking various accuracy
-from sklearn.metrics import r2_score
-
-test_x = np.array(test[["ENGINESIZE"]])
-test_y = np.array(test[["CO2EMISSIONS"]])
-test_y_ = regr.predict(test_x)
-
-print("Mean absolute error: %.2f" % np.mean(np.absolute(test_y_- test_y)))
-print("Mean sum of squares (MSE): %.2f" % np.mean((test_y_- test_y) ** 2))
-print("R2-score: %.2f" % r2_score(test_y_, test_y))
-
-<br>
-      ////////////////////////////////////////////
-      </p>
-  <div class="code-block">
-    #decision tree
-    import pandas
-df = pandas.read_csv("data.csv")
-print(df)
-
-d = {'UK': 0, 'USA': 1, 'N': 2}
-df['Nationality'] = df['Nationality'].map(d)
-d = {'YES': 1, 'NO': 0}
-df['Go'] = df['Go'].map(d)
-print(df)
-
-print(dtree.predict([[40, 10, 7, 1]]))
-
-    #k-means-clustering
-import matplotlib.pyplot as plt
-x = [4, 5, 10, 4, 3, 11, 14 , 6, 10, 12]
-y = [21, 19, 24, 17, 16, 25, 24, 22, 21, 21]
-plt.scatter(x, y)
-plt.show()
-from sklearn.cluster import KMeans
-data = list(zip(x, y))
-inertias = []
-for i in range(1,11):
-kmeans = KMeans(n_clusters=i)
-kmeans.fit(data)
-inertias.append(kmeans.inertia_)
-plt.plot(range(1,11), inertias, marker='o')
-plt.title('Elbow method')
-plt.xlabel('Number of clusters')
-plt.ylabel('Inertia')
-plt.show()
-kmeans = KMeans(n_clusters=2)
-kmeans.fit(data)
-plt.scatter(x, y, c=kmeans.labels_)
-plt.show()
-
-#another k-means clusttering
-import matplotlib.pyplot as plt
-from sklearn.cluster import Kmeans
-x = [4, 5, 10, 4, 3, 11, 14 , 6, 10, 12]
-y = [21, 19, 24, 17, 16, 25, 24, 22, 21, 21]
-data = list(zip(x, y))
-print(data)
-inertias = []
-for i in range(1,11):
-kmeans = KMeans(n_clusters=i)
-kmeans.fit(data)
-inertias.append(kmeans.inertia_)
-plt.plot(range(1,11), inertias, marker='o')
-plt.title('Elbow method')
-plt.xlabel('Number of clusters')
-plt.ylabel('Inertia')
-plt.show()
-kmeans = KMeans(n_clusters=2)
-kmeans.fit(data)
-plt.scatter(x, y, c=kmeans.labels_)
-plt.show()
-
-    <h2>Linear Regression with Standard Scaling</h2>
-    
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-
-# Load the dataset
-df = pd.read_csv('mydata.csv')
-
-# Extract Weight and Volume columns
-weight_volume = df[['Weight', 'Volume']]
-
-# Apply StandardScaler to these features
-scaler = StandardScaler()
-scaled_weight_volume = scaler.fit_transform(weight_volume)
-
-# Print the scaled values
-print(scaled_weight_volume)
-
-# Train a linear regression model using scaled Weight and Volume
-model = LinearRegression()
-model.fit(scaled_weight_volume, df['CO2'])
-
-# Predict CO2 for a car with Weight = 2300kg, Volume = 1.3
-# First, scale the input values using the same scaler
-scaled_input = scaler.transform([[2300, 1.3]])
-
-# Now predict using the scaled input
-predicted_co2 = model.predict(scaled_input)
-
-# Print the predicted CO2
-print(predicted_co2)
   </div>
 
-  
-  <div class="code-block">
 
-    <h2>ANN Implementation in Python (using Keras)</h2>
-    
-import numpy as np
-import pandas as pd
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from sklearn.metrics import classification_report
-
-# Step 1: Generate a sample dataset
-X, y = make_classification(n_samples=1000, n_features=10, 
-                          n_informative=5, n_redundant=0, 
-                          n_classes=2, random_state=42)
-
-# Step 2: Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, 
-                                                  test_size=0.2, 
-                                                  random_state=42)
-
-# Step 3: Feature scaling
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
-# Step 4: Build the ANN model
-model = Sequential()
-model.add(Dense(16, input_dim=10, activation='relu'))  # hidden layer
-model.add(Dense(8, activation='relu'))                 # hidden layer
-model.add(Dense(1, activation='sigmoid'))              # output layer
-
-# Step 5: Compile the model
-model.compile(optimizer=Adam(learning_rate=0.001),
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
-
-# Step 6: Train the model
-model.fit(X_train, y_train, epochs=50, batch_size=16, verbose=1)
-
-# Step 7: Evaluate the model
-y_pred = (model.predict(X_test) > 0.5).astype("int32")
-print(classification_report(y_test, y_pred))
-  </div>
-
-  
-  <div class="code-block">
-
-    <h2>Diabetes Prediction ANN</h2>
-    
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from sklearn.metrics import classification_report
-
-# Step 1: Load dataset
-url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
-columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness',
-           'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
-data = pd.read_csv(url, header=None, names=columns)
-
-# Step 2: Split features and target
-X = data.iloc[:, :-1]
-y = data.iloc[:, -1]
-
-# Step 3: Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, 
-                                                  test_size=0.2, 
-                                                  random_state=42)
-
-# Step 4: Normalize features
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
-# Step 5: Build the ANN model
-model = Sequential()
-model.add(Dense(16, input_dim=8, activation='relu'))
-model.add(Dense(8, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
-
-# Step 6: Compile the model
-model.compile(optimizer=Adam(learning_rate=0.001),
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
-
-# Step 7: Train the model
-model.fit(X_train, y_train, epochs=100, batch_size=10, verbose=1)
-
-# Step 8: Evaluate the model
-y_pred = (model.predict(X_test) > 0.5).astype("int32")
-print(classification_report(y_test, y_pred))
-  </div>
-
-  
-  <div class="code-block">
-
-    <h2>K-Means with Iris Dataset</h2>
-    
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.datasets import load_iris
-from sklearn.cluster import KMeans
-from sklearn.metrics import confusion_matrix, accuracy_score
-from sklearn.decomposition import PCA
-
-# Step 1: Load the Iris dataset
-iris = load_iris()
-X = iris.data
-y = iris.target
-
-# Step 2: Apply K-Means clustering
-kmeans = KMeans(n_clusters=3, random_state=42)
-kmeans.fit(X)
-y_kmeans = kmeans.labels_
-
-# Step 3: Evaluate clustering with actual labels
-print("Confusion Matrix:")
-print(confusion_matrix(y, y_kmeans))
-
-# Sometimes labels need to be realigned to match original classes:
-# Example of mapping manually based on majority voting (only for evaluation)
-def relabel(preds):
-    mapping = {0:1, 1:0, 2:2}  # This mapping depends on cluster assignments
-    return np.array([mapping[label] for label in preds])
-
-adjusted_preds = relabel(y_kmeans)
-print("\nAdjusted Accuracy:", accuracy_score(y, adjusted_preds))
-
-# Step 4: Visualize using PCA (for 2D plot)
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X)
-plt.figure(figsize=(8, 6))
-sns.scatterplot(x=X_pca[:, 0], y=X_pca[:, 1], hue=y_kmeans, palette="Set1", s=100)
-plt.title("K-Means Clustering on Iris Dataset (PCA-reduced)")
-plt.xlabel("PCA Component 1")
-plt.ylabel("PCA Component 2")
-plt.legend(title="Cluster")
-plt.grid(True)
-plt.show()
-  </div>
-
-  
-  <div class="code-block">
-
-    <h2>K-Means with Synthetic Data</h2>
-    
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.metrics import silhouette_score, adjusted_rand_score
-
-# Step 1: Generate Synthetic Data
-# Generate 4-cluster synthetic data
-X, y_true = make_blobs(n_samples=1000, centers=4, cluster_std=0.60, random_state=42)
-print(f"Data shape: {X.shape}")
-
-# Step 2: Apply K-Means Clustering
-# Apply K-Means with 4 clusters
-kmeans = KMeans(n_clusters=4, random_state=42, n_init='auto')
-y_kmeans = kmeans.fit_predict(X)
-# Cluster centers
-centers = kmeans.cluster_centers_
-
-# Step 3: Evaluate Clustering
-# Silhouette Score (higher is better, max = 1)
-silhouette = silhouette_score(X, y_kmeans)
-print(f"Silhouette Score: {silhouette:.4f}")
-# Adjusted Rand Index (compares with ground truth)
-ari = adjusted_rand_score(y_true, y_kmeans)
-print(f"Adjusted Rand Index: {ari:.4f}")
-
-# Step 4: Visualize Using PCA
-# Reduce dimensions for plotting
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(X)
-centers_pca = pca.transform(centers)
-
-# Plot
-plt.figure(figsize=(8, 6))
-plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y_kmeans, cmap='viridis', s=30)
-plt.scatter(centers_pca[:, 0], centers_pca[:, 1], c='red', s=200, alpha=0.75, marker='X', 
-           label='Centers')
-plt.title('K-Means Clustering (PCA Visualization)')
-plt.xlabel('PCA Component 1')
-plt.ylabel('PCA Component 2')
-plt.legend()
-plt.grid(True)
-plt.show()
-
-#cnn
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
-import matplotlib.pyplot as plt
-import numpy as np
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-# Step 1: Create the data generator
-train_datagen = ImageDataGenerator(rescale=1./255)
-# Step 2: Load the dataset
-train_generator = train_datagen.flow_from_directory(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical 10\shapes_dataset\train',
-target_size=(64, 64),
-batch_size=32,
-class_mode='categorical',
-color_mode='grayscale' # Make sure to match this with your model's input
-)
-# Step 3: Build the CNN model
-model = Sequential([
-Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 3)), # was (64, 64, 1)
-MaxPooling2D(2, 2),
-Flatten(),
-Dense(64, activation='relu'),
-Dense(3, activation='softmax')
-])
-
-
-#Build the CNN Model(Complex tasks)
-model = Sequential()
-model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 3)))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(64, (3, 3), activation='relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Flatten())
-model.add(Dense(128, activation='relu'))
-model.add(Dropout(0.5))
-model.add(Dense(4, activation='softmax')) # for 4-class classification
-
-#Compile the Model
-model.compile(
-optimizer='adam',
-loss='categorical_crossentropy',
-metrics=['accuracy']
-)
-#Validation data
-val_generator = train_datagen.flow_from_directory(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical 10\shapes_dataset\validation',
-target_size=(64, 64),
-batch_size=32,
-class_mode='categorical',
-color_mode='grayscale',
-subset='validation'
-)
-Train the Model
-history = model.fit(
-train_generator,
-epochs=10,
-validation_data=val_generator
-)Evaluate the Model
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-test_datagen = ImageDataGenerator(rescale=1./255)
-test_generator = test_datagen.flow_from_directory(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical 10\shapes_dataset\test',
-target_size=(64, 64),
-batch_size=32,
-class_mode='categorical',
-color_mode='grayscale'
-)loss, accuracy = model.evaluate(test_generator)
-print("Test Accuracy: %.2f%%" % (accuracy * 100))Make Predictions
-img = image.load_img(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical10\shapes_dataset\test\circle\circle_52.png',
-target_size=(64, 64),
-color_mode='grayscale' # Add this if your model uses grayscale
-)Visualize Accuracy and Loss
-plt.plot(history.history['accuracy'], label='Train Accuracy')
-plt.plot(history.history['val_accuracy'], label='Val Accuracy')
-plt.title('Model Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.show()Visualize Accuracy and Loss
-plt.plot(history.history['loss'], label='Train Loss')
-plt.plot(history.history['val_loss'], label='Val Loss')
-plt.title('Model Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
-plt.show()
-
-#anotherr CNN Model
-Tools and Libraries
-from tensorflow import keras
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense
-from tensorflow.keras.optimizers import AdamLoad Image Data
-# Set up the ImageDataGenerator for scaling pixel values
-train_datagen = ImageDataGenerator(rescale=1./255)
-val_datagen = ImageDataGenerator(rescale=1./255)
-test_datagen = ImageDataGenerator(rescale=1./255)
-# Train data
-train_generator = train_datagen.flow_from_directory(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical 10\shapes_dataset1\train',
-target_size=(64, 64),
-# Resize images to 64x64
-batch_size=32,
-class_mode='categorical', # Multi-class classification
-color_mode='rgb'
-)
-# Change this to 'grayscale' if using grayscale images# Validation data
-val_generator = val_datagen.flow_from_directory(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical 10\shapes_dataset1\validation',
-target_size=(64, 64),
-batch_size=32,
-class_mode='categorical',
-color_mode='rgb'
-)
-# Test data
-test_generator = test_datagen.flow_from_directory(
-r'C:\Users\Acer\Desktop\Lectures\AI\Practical 10\shapes_dataset1\test',
-target_size=(64, 64),
-batch_size=32,
-class_mode='categorical',
-color_mode='rgb'
-)Build the CNN Model
-model = Sequential([
-Input(shape=(64, 64, 3)), # Accept RGB images (3 channels)
-Conv2D(32, (3, 3), activation='relu'),
-MaxPooling2D(),
-Conv2D(64, (3, 3), activation='relu'),
-MaxPooling2D(),
-Flatten(),
-Dense(128, activation='relu'),
-Dense(3, activation='softmax') # Assuming 3 classes
-])Compile the Model
-model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=['accuracy'])
-accuracyTrain the Model
-history = model.fit(
-train_generator,
-epochs=10, # Change this as needed
-validation_data=val_generator
-)Evaluate the Model
-test_loss, test_accuracy = model.evaluate(test_generator)
-print(f'Test Accuracy: {test_accuracy}')
-
-  </div>
 </code></pre>
   <script>
     window.addEventListener('DOMContentLoaded', function() {
