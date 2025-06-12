@@ -127,6 +127,97 @@ plt.imshow(contrast_img, cmap='gray')
 plt.axis('off')
 plt.show()
 ///////////////////////////////////////////////////////////
+#Inensiy 
+# Import libraries
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load image in grayscale
+img = cv2.imread('image.jpg', 0)
+
+# Display original image
+plt.figure(figsize=(6, 6))
+plt.title("Original Image")
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 1. Negative Transformation
+def negative_transformation(img):
+    neg_img = 255 - img
+    return neg_img
+
+# Apply and display
+neg_img = negative_transformation(img)
+plt.figure(figsize=(6, 6))
+plt.title("Negative Image")
+plt.imshow(neg_img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 2. Log Transformation
+def log_transformation(img):
+    c = 255 / np.log(1 + np.max(img))
+    log_img = c * (np.log(1 + img))
+    log_img = np.array(log_img, dtype=np.uint8)
+    return log_img
+
+# Apply and display
+log_img = log_transformation(img)
+plt.figure(figsize=(6, 6))
+plt.title("Log Transformed Image")
+plt.imshow(log_img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 3. Gamma (Power-law) Transformation
+def gamma_transformation(img, gamma=1.0):
+    normalized_img = img / 255.0
+    gamma_img = np.power(normalized_img, gamma)
+    gamma_img = np.uint8(gamma_img * 255)
+    return gamma_img
+
+# Apply and display for different gamma values
+gammas = [0.5, 1.5, 2.0]
+plt.figure(figsize=(18, 6))
+for i, g in enumerate(gammas):
+    transformed = gamma_transformation(img, gamma=g)
+    plt.subplot(1, len(gammas), i+1)
+    plt.title(f"Gamma = {g}")
+    plt.imshow(transformed, cmap='gray')
+    plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 4. Piecewise Linear Transformation
+def piecewise_linear_transformation(img, r1, s1, r2, s2):
+    def pixel_val(p):
+        if p < r1:
+            return (s1 / r1) * p
+        elif p < r2:
+            return ((s2 - s1) / (r2 - r1)) * (p - r1) + s1
+        else:
+            return ((255 - s2) / (255 - r2)) * (p - r2) + s2
+
+    pixel_val_vec = np.vectorize(pixel_val)
+    contrast_stretched = pixel_val_vec(img)
+    return np.array(contrast_stretched, dtype=np.uint8)
+
+# Apply and display
+r1, s1 = 70, 0
+r2, s2 = 140, 255
+contrast_img = piecewise_linear_transformation(img, r1, s1, r2, s2)
+
+plt.figure(figsize=(6, 6))
+plt.title("Piecewise Linear Transformation")
+plt.imshow(contrast_img, cmap='gray')
+plt.axis('off')
+plt.show()
+///////////////////////////////////////////////////////////
 import cv2
 from google.colab.patches import cv2_imshow
 
@@ -450,349 +541,336 @@ one is the 5th element.
             /////////////////////////////////////
 
 Morphological Transformations
-1. Erosion
-1 import cv2 as cv
-2 import numpy as np
-3 from google.colab.patches import cv2_imshow
-4 img = cv.imread('j.png', cv. IMREAD_GRAYSCALE)
-5 assert img is not None, "file could not be read, check with os.path.exists()"
-6 kernel = np.ones((5,5), np. uint8)
-7 erosion = cv.erode (img, kernel, iterations = 1)
+. Erosion
+ import cv2 as cv
+ import numpy as np
+ from google.colab.patches import cv2_imshow
+ img = cv.imread('j.png', cv. IMREAD_GRAYSCALE)
+ assert img is not None, "file could not be read, check with os.path.exists()"
+ kernel = np.ones((5,5), np. uint8)
+ erosion = cv.erode (img, kernel, iterations = 1)
+ print("Original Image:")
 
-1 print("Original Image:")
-3
-2 cv2_imshow(img)
-4 print("Eroded Image:")
-5 cv2_imshow(erosion)
+ cv2_imshow(img)
+ print("Eroded Image:")
+ cv2_imshow(erosion)
 
 #Dilation
 
-1 dilation = cv.dilate(img, kernel, iterations = 1)
-1 print("Original Image:")
-2 cv2_imshow(img)
-4 print("Dilated Image:")
-5 cv2_imshow(dilation)
+ dilation = cv.dilate(img, kernel, iterations = 1)
+ print("Original Image:")
+ cv2_imshow(img)
+ print("Dilated Image:")
+ cv2_imshow(dilation)
 
 Opening
-3
-1 img_op_input = cv.imread('opening.png', cv. IMREAD_GRAYSCALE)
-2 assert img is not None, "file could not be read, check with os.path.exists()"
-3 opening = cv.morphologyEx(img_op_input, cv.MORPH_OPEN, kernel)
-1 print("Original Image:")
-2 cv2_imshow(img_op_input)
-4 print("Opened Image:")
-5 cv2_imshow(opening)
+
+ img_op_input = cv.imread('opening.png', cv. IMREAD_GRAYSCALE)
+ assert img is not None, "file could not be read, check with os.path.exists()"
+ opening = cv.morphologyEx(img_op_input, cv.MORPH_OPEN, kernel)
+ print("Original Image:")
+ cv2_imshow(img_op_input)
+ print("Opened Image:")
+ cv2_imshow(opening)
 
 Closing
 
-1 img_cl_input = cv.imread('closing.png', cv.IMREAD_GRAYSCALE)
-2 assert img is not None, "file could not be read, check with os.path.exists()"
-3 closing = cv.morphologyEx(img_cl_input, cv.MORPH_CLOSE, kernel)
-1 print("Original Image:")
-2 cv2_imshow(img_cl_input)
-4 print("Closed Image:")
-5 cv2_imshow(closing)
+ img_cl_input = cv.imread('closing.png', cv.IMREAD_GRAYSCALE)
+ assert img is not None, "file could not be read, check with os.path.exists()"
+ closing = cv.morphologyEx(img_cl_input, cv.MORPH_CLOSE, kernel)
+ print("Original Image:")
+ cv2_imshow(img_cl_input)
+ print("Closed Image:")
+ cv2_imshow(closing)
 
 Morphological Gradient
-3
-1 gradient = cv.morphologyEx(img, cv.MORPH_GRADIENT, kernel)
-1 print("Original Image:")
-2 cv2_imshow(img)
-4 print("Gradiented Image:")
-5 cv2_imshow(gradient)
+
+ gradient = cv.morphologyEx(img, cv.MORPH_GRADIENT, kernel)
+ print("Original Image:")
+ cv2_imshow(img)
+ print("Gradiented Image:")
+ cv2_imshow(gradient)
 
 Hit or Miss
-1 import cv2 as cv
-2 import numpy as np
-3 from google.colab.patches import cv2_imshow # For displaying in Colab
-4
-5 # Define input image (small binary image)
-6 input_image = np.array((
-7
+ import cv2 as cv
+ import numpy as np
+ from google.colab.patches import cv2_imshow # For displaying in Colab
+
+ # Define input image (small binary image)
+ input_image = np.array((
+
 [0, 0, 0, 0, 0, 0, 0, 0],
-8
+
 [0, 255, 255, 255, 0, 0, 0, 255],
-9 [0, 255, 255, 255, 0, 0, 0, 0],
-10
+ [0, 255, 255, 255, 0, 0, 0, 0],
+
 [0, 255, 255, 255, 0, 255, 0, 0],
-11
+
 [0, 0, 255, 0, 0, 0, 0, 0],
-12
+
 [0, 0, 255, 0, 0, 255, 255, 0],
-13
+
 [0, 255, 0, 255, 0, 0, 255, 0],
-14 [0, 255, 255, 255, 0, 0, 0, 0]), dtype="uint8")
-15
-16 # Define kernel for hit-or-miss
-17 kernel = np.array((
-18 [0, 1, 0],
-19
+ [0, 255, 255, 255, 0, 0, 0, 0]), dtype="uint8")
+
+ # Define kernel for hit-or-miss
+ kernel = np.array((
+ [0, 1, 0],
+
 [1, -1, 1],
-20 [0, 1, 0]), dtype="int")
-21
-22 # Apply Hit-or-Miss operation
-→
-B
-23 output_image = cv.morphologyEx (input_image, cv.MORPH HITMISS, kernel)
-24
-25 # Scale up for visibility (e.g., 40x each pixel)
-26 scale = 40
-27 input_resized = cv.resize(input_image, (input_image.shape[1]*scale, input_image.shape[0]*scale), interpolation=cv.INTER_NEAREST)
-28 output_resized = cv.resize(output_image, (output_image.shape[1]*scale, output_image.shape[0]*scale), interpolation=cv.INTER_NEAREST)
-29
-30 # Display
-31 print("Input Image:")
-32 cv2_imshow(input_resized)
-33
-34 print("Output Image (Hit-or-Miss):")
-35 cv2_imshow(output_resized)
-36
+ [0, 1, 0]), dtype="int")
+
+ # Apply Hit-or-Miss operation
+
+
+ output_image = cv.morphologyEx (input_image, cv.MORPH HITMISS, kernel)
+
+ # Scale up for visibility (e.g., 40x each pixel)
+ scale = 40
+ input_resized = cv.resize(input_image, (input_image.shape[1]*scale, input_image.shape[0]*scale), interpolation=cv.INTER_NEAREST)
+ output_resized = cv.resize(output_image, (output_image.shape[1]*scale, output_image.shape[0]*scale), interpolation=cv.INTER_NEAREST)
+
+ # Display
+ print("Input Image:")
+ cv2_imshow(input_resized)
+
+ print("Output Image (Hit-or-Miss):")
+ cv2_imshow(output_resized)
+
 ////////////////////////////////////
 
 Edge Detection - Sobel Edge Detection
 
-1 import cv2
-2 import numpy as np
-3 import matplotlib.pyplot as plt
-4
-5 # Load the image
-6 image_path
+ import cv2
+ import numpy as np
+ import matplotlib.pyplot as plt
+
+ # Load the image
+ image_path
 =
 'Edge Detection.png'
-7 image = cv2.imread(image_path)
-8
-9 # Convert to grayscale
-10 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-11
-12 # Apply Gaussian smoothing (optional)
-13 blurred_image = cv2.GaussianBlur (gray_image, (3, 3), 0)
-14
-15 # Sobel operators
-16 Gx = cv2.Sobel (blurred_image, cv2.CV_64F, 1, 0, ksize=3)
-17 Gy= cv2.Sobel (blurred_image, cv2.CV_64F, 0, 1, ksize=3)
-18
-19 # Gradient magnitude
-20 G = np.sqrt(Gx**2 + Gy**2)
-21
-22 # Normalize to range 0-255
-23 Gx = np. uint8 (255* np.abs (Gx) / np.max(Gx))
-24 Gy = np. uint8 (255* np.abs (Gy) / np.max(Gy))
-25 G = np. uint8 (255 G/ np.max(G))
-26
-27 # Display the results
-28 plt.figure(figsize=(15, 10))
-29
-30 # Original image
-31 plt.subplot(2, 2, 1)
-32 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-33 plt.title('Original Image')
-34 plt.axis('off')
-35
-36 # Gradient in x direction
-37 plt.subplot(2, 2, 2)
-38 plt.imshow(Gx, cmap='gray')
-39 plt.title('Gradient in x direction')
-40 plt.axis('off')
-41
-42 # Gradient in Y direction
-43 plt.subplot(2, 2, 3)
-44 plt.imshow(Gy, cmap='gray')
-45 plt.title('Gradient in Y direction')
-46 plt.axis('off')
-47
-48 # Edge-detected image
-49 plt.subplot(2, 2, 4)
-50 plt.imshow(G, cmap='gray')
-51 plt.title('Sobel Edge Detection')
-52 plt.axis('off')
-54 plt.show()
+ image = cv2.imread(image_path)
+
+ # Convert to grayscale
+ gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+ # Apply Gaussian smoothing (optional)
+ blurred_image = cv2.GaussianBlur (gray_image, (3, 3), 0)
+
+ # Sobel operators
+ Gx = cv2.Sobel (blurred_image, cv2.CV_64F, 1, 0, ksize=3)
+ Gy= cv2.Sobel (blurred_image, cv2.CV_64F, 0, 1, ksize=3)
+
+ # Gradient magnitude
+ G = np.sqrt(Gx**2 + Gy**2)
+
+ # Normalize to range 0-255
+ Gx = np. uint8 (255* np.abs (Gx) / np.max(Gx))
+ Gy = np. uint8 (255* np.abs (Gy) / np.max(Gy))
+ G = np. uint8 (255 G/ np.max(G))
+
+ # Display the results
+ plt.figure(figsize=(15, 10))
+
+ # Original image
+ plt.subplot(2, 2, 1)
+ plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+ plt.title('Original Image')
+ plt.axis('off')
+
+ # Gradient in x direction
+ plt.subplot(2, 2, 2)
+ plt.imshow(Gx, cmap='gray')
+ plt.title('Gradient in x direction')
+ plt.axis('off')
+
+ # Gradient in Y direction
+ plt.subplot(2, 2, 3)
+ plt.imshow(Gy, cmap='gray')
+ plt.title('Gradient in Y direction')
+ plt.axis('off')
+
+ # Edge-detected image
+ plt.subplot(2, 2, 4)
+ plt.imshow(G, cmap='gray')
+ plt.title('Sobel Edge Detection')
+ plt.axis('off')
+ plt.show()
 
 Edge Detection - Canny Edge Detection
-1 import cv2
-2 import numpy as np
-3 import matplotlib.pyplot as plt
-4
-5 # Load the image
-6 image_path = 'Edge Detection.png' # Replace with your image path
-7 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-8 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-9
-10 # Apply Gaussian blur to reduce noise
-11 blurred_image = cv2.GaussianBlur (gray_image, (5, 5), 1.4)
-12
-13 # Apply Canny edge detector
-14 edges = cv2.Canny(blurred_image, 100, 200)
-15
-16 # Display the result
-17 plt.figure(figsize=(10, 5))
-18
-19 # Original image
-20 plt.subplot(1, 2, 1)
-21 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-22 plt.title('Original Image')
-23 plt.axis('off')
-24
-25 # Edge-detected image
-26 plt.subplot(1, 2, 2)
-27 plt.imshow(edges, cmap='gray')
-28 plt.title('Canny Edge Detection')
-29 plt.axis('off')
-H
-30
-31 plt.show()
+ import cv2
+ import numpy as np
+ import matplotlib.pyplot as plt
+
+ # Load the image
+ image_path = 'Edge Detection.png' # Replace with your image path
+ image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+ gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+ # Apply Gaussian blur to reduce noise
+ blurred_image = cv2.GaussianBlur (gray_image, (5, 5), 1.4)
+
+ # Apply Canny edge detector
+ edges = cv2.Canny(blurred_image, 100, 200)
+
+ # Display the result
+ plt.figure(figsize=(10, 5))
+
+ # Original image
+ plt.subplot(1, 2, 1)
+ plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+ plt.title('Original Image')
+ plt.axis('off')
+
+ # Edge-detected image
+ plt.subplot(1, 2, 2)
+ plt.imshow(edges, cmap='gray')
+ plt.title('Canny Edge Detection')
+ plt.axis('off')
+
+ plt.show()
 
 Edge Detection- Laplacian Edge Detection
 
-1 import cv2
-2 import numpy as np
-3 import matplotlib.pyplot as plt
-4
-5 # Load the image
-6 image_path = 'Edge Detection.png' # Replace with your image path
-7 image
+ import cv2
+ import numpy as np
+ import matplotlib.pyplot as plt
+
+ # Load the image
+ image_path = 'Edge Detection.png' # Replace with your image path
+ image
 =
-cv2.imread(image_path, cv2.IMREAD_COLOR)
-8 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-9
-10 # Optional: Apply Gaussian blur to reduce noise
-11 blurred_image = cv2.GaussianBlur (gray_image, (3, 3), 0)
-12
-13 # Apply the Laplacian operator
-14 laplacian = cv2.Laplacian (blurred_image, cv2.CV_64F)
-15
-16 # Convert the result to 8-bit (0-255) range
-17 laplacian_abs = cv2.convertScaleAbs (laplacian)
-18
-19 # Display the result
-20 plt.figure(figsize=(10, 5))
-21
-22 # Original image
-23 plt.subplot(1, 2, 1)
-24 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-25 plt.title('Original Image')
-26 plt.axis('off')
-27
-28 # Laplacian edge-detected image
-29 plt.subplot(1, 2, 2)
-30 plt.imshow(laplacian_abs, cmap='gray')
-31 plt.title('Laplacian Edge Detection')
-32 plt.axis('off')
-33
-34 plt.show()
+cv2.imread(image_path, cv2.IMREAD_COLOR) gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+ # Optional: Apply Gaussian blur to reduce noise
+ blurred_image = cv2.GaussianBlur (gray_image, (3, 3), 0)
+
+ # Apply the Laplacian operator
+ laplacian = cv2.Laplacian (blurred_image, cv2.CV_64F)
+
+ # Convert the result to 8-bit (0-255) range
+ laplacian_abs = cv2.convertScaleAbs (laplacian)
+
+ # Display the result
+ plt.figure(figsize=(10, 5))
+
+ # Original image
+ plt.subplot(1, 2, 1)
+ plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+ plt.title('Original Image')
+ plt.axis('off')
+
+ # Laplacian edge-detected image
+ plt.subplot(1, 2, 2)
+ plt.imshow(laplacian_abs, cmap='gray')
+ plt.title('Laplacian Edge Detection')
+ plt.axis('off')
+
+ plt.show()
 
 link textEdge Detection-Prewitt Edge Detection
-1 import cv2
-2 import numpy as np
-3 import matplotlib.pyplot as plt
-4
-5 def prewitt_edge_detection (image):
+ import cv2
+ import numpy as np
+ import matplotlib.pyplot as plt
+
+ def prewitt_edge_detection (image):
 Laplacian Edge Detection
-11
-12
-13
-6
+
+
+
+
 # Convert the image to grayscale
-7
+
 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-8
-9
+
+
 # Apply horizontal Prewitt kernel
-10 kernel_x = np.array([[-1, 0, 1],
+ kernel_x = np.array([[-1, 0, 1],
 [-1, 0, 1],
 [-1, 0, 1]])
 horizontal_edges
 =
 cv2.filter2D (gray_image, -1, kernel_x)
-14
-15
-16
-17
+
+
+
+
 # Apply vertical Prewitt kernel
 kernel y = np.array([[-1, -1, -1],
 [0, 0, 0],
-18
+
 [1, 1, 1]])
-19
-20
+
+
 vertical_edges = cv2.filter2D (gray_image, -1, kernel_y)
 # Ensure both arrays have the same data type
-21
+
 horizontal_edges = np.float32(horizontal_edges)
-22
+
 vertical_edges = np.float32(vertical_edges)
-23
-24
+
+
 # Compute gradient magnitude
-25
-26
-27
-28
-threshold 50
-29
-30
+
+
+
+
 gradient_magnitude = cv2.magnitude (horizontal_edges, vertical_edges)
+threshold = 50
 # Optional: Apply thresholding to highlight edges
-edges = cv2.threshold (gradient_magnitude, threshold, 255, cv2.THRESH_BINARY)
-31 return edges
-32
-33 # Read the input image
-34 image = cv2.imread('Edge Detection.png')
-[]
-35
-36 # Apply Prewitt edge detection
-37 edges = prewitt_edge_detection(image)
-38
-39 # Plotting both images using subplots
-40 plt.figure(figsize=(10, 5))
-41
-42 # Original Image
-43 plt.subplot(1, 2, 1)
-44 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-45 plt.title('Original Image')
-46 plt.axis('off')
-47
-48 # Detected Edges
-49 plt.subplot(1, 2, 2)
-50 plt.imshow(edges, cmap='gray')
-51 plt.title('Prewitt Edge Detection')
-52 plt.axis('off')
-53
-54 plt.show()
+_,edges = cv2.threshold (gradient_magnitude, threshold, 255, cv2.THRESH_BINARY)
+return edges
+# Read the input image
+image = cv2.imread('Edge Detection.png')
+# Apply Prewitt edge detection
+edges = prewitt_edge_detection(image)
+# Plotting both images using subplots
+plt.figure(figsize=(10, 5))
+# Original Image
+plt.subplot(1, 2, 1)
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+plt.title('Original Image')
+plt.axis('off')
+# Detected Edges
+plt.subplot(1, 2, 2)
+plt.imshow(edges, cmap='gray')
+plt.title('Prewitt Edge Detection')
+plt.axis('off')
+plt.show()
 
 Global Thresholding
-1 import cv2
-2 import numpy as np
-3 import matplotlib.pyplot as plt
-4
-5 # Load the image
-6 color_image = cv2.imread('threshold.png', cv2.IMREAD_COLOR)
-7
-8 # convert to grayscale image
-9 grayscale_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
-10
-11 # Manual thresholding
-12 threshold_value = 128 # Example manual threshold value
-13_, binary_image = cv2.threshold (grayscale_image, threshold_value, 255, cv2.THRESH_BINARY)
-H
-14
-15 # Display the original and thresholded images
-16 plt.figure(figsize=(15, 5))
-17
-18 plt.subplot(1, 3, 1)
-19 plt.title('Original Image')
-20 plt.imshow(color_image, cmap='gray')
-21 plt.axis('off')
-22
-23 plt.subplot(1, 3, 2)
-24 plt.title('Grayscale Image')
-25 plt.imshow(grayscale_image, cmap='gray')
-26 plt.axis('off')
-27
-28 plt.subplot(1, 3, 3)
-29 plt.title(f'Global Thresholding (T={threshold_value})')
-30 plt.imshow(binary_image, cmap='gray')
-31 plt.axis('off')
-32 plt.show()
+ import cv2
+ import numpy as np
+ import matplotlib.pyplot as plt
+
+ # Load the image
+ color_image = cv2.imread('threshold.png', cv2.IMREAD_COLOR)
+
+ # convert to grayscale image
+ grayscale_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+
+ # Manual thresholding
+ threshold_value = 128 # Example manual threshold value
+_, binary_image = cv2.threshold (grayscale_image, threshold_value, 255, cv2.THRESH_BINARY)
+
+
+ # Display the original and thresholded images
+ plt.figure(figsize=(15, 5))
+
+ plt.subplot(1, 3, 1)
+ plt.title('Original Image')
+ plt.imshow(color_image, cmap='gray')
+ plt.axis('off')
+
+ plt.subplot(1, 3, 2)
+ plt.title('Grayscale Image')
+ plt.imshow(grayscale_image, cmap='gray')
+ plt.axis('off')
+
+ plt.subplot(1, 3, 3)
+ plt.title(f'Global Thresholding (T={threshold_value})')
+ plt.imshow(binary_image, cmap='gray')
+ plt.axis('off')
+ plt.show()
 Local Thresholding
 
 import cv2
@@ -800,7 +878,8 @@ import matplotlib.pyplot as plt
 # Load the original color image
 color_image = cv2.imread('threshold.png')
 # Convert the color image to grayscale
-# Apply Adaptive Mean Thresholding gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+# Apply Adaptive Mean Thresholding 
+            gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
 adaptive_mean = cv2.adaptiveThreshold (gray_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C,CV2.THRESH_BINARY, 11, 2)
 
 
@@ -816,21 +895,20 @@ CV2.THRESH_BINARY, 11, 2)
  plt.figure(figsize=(15, 10))
  for i in range(4):
 
-plt.subplot(2, 2, i+1)
+    plt.subplot(2, 2, i+1)
 
-if i == 0:
+    if i == 0:
 
-plt.imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB)) # Convert BGR to RGB for displaying correctly with matplotlib
+        plt.imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB)) # Convert BGR to RGB for displaying correctly with matplotlib
 
-else:
+    else:
 
-plt.imshow(images[i], cmap='gray')
+      plt.imshow(images[i], cmap='gray')
 
 
 plt.title(titles[i])
 plt.xticks([]), plt.yticks([])
-31 plt.show()
-
+plt.show()
 
     </div>
       
