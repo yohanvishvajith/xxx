@@ -36,1371 +36,801 @@
     
   <div class="code-block">
 
-    <h2>Chat Application</h2>
-    <h3>1. One-time Chat Implementation</h3>
-
-    <h3>OneChatServer.java</h3>    
-
-    import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-public class OneChatServer {
-    public static void main(String[] args) {
-        try {
-            // Create server socket on port 1111
-            ServerSocket serverSocket = new ServerSocket(1111);
-            
-            // Wait for client connection
-            Socket socket = serverSocket.accept();
-            
-            // Read message from client
-            DataInputStream ReadClientMessage = new DataInputStream(socket.getInputStream());
-            String clientMessage = ReadClientMessage.readUTF();
-            System.out.println(clientMessage);
-            
-            // Send response to client
-            DataOutputStream writeToClient = new DataOutputStream(socket.getOutputStream());
-            writeToClient.writeUTF("Hello Client");
-            writeToClient.flush();
-            
-            // Close connections
-            socket.close();
-            serverSocket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-}
-
-    <h3>OneChatClient.java</h3> 
-
-    import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-
-public class OneChatClient {
-    public static void main(String[] args) {
-        try {
-            // Connect to server on localhost:1111
-            Socket socket = new Socket("localhost", 1111);
-            
-            // Send message to server
-            DataOutputStream writeToServer = new DataOutputStream(socket.getOutputStream());
-            writeToServer.writeUTF("Hello Server");
-            writeToServer.flush();
-            
-            // Read server response
-            DataInputStream ReadServerMessage = new DataInputStream(socket.getInputStream());
-            String clientMessage = ReadServerMessage.readUTF();
-            System.out.println(clientMessage);
-            
-            // Close connection
-            socket.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-}
-
-    <h3>2. Loop Chat Implementation</h3>
-
-    <h3>ChatLoopServer.java</h3>
-
-    import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-public class ChatLoopServer {
-    public static void main(String[] args) {
-        try(ServerSocket serverSocket = new ServerSocket(1234)) {
-            System.out.println("Server started. Listening on port 1234..." + serverSocket);
-            
-            while (true) {
-                // Accept client connection
-                Socket socket = serverSocket.accept();
-                System.out.println("Client is Connected ...." + serverSocket);
-                
-                // Set up input/output streams
-                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                
-                String readClientMessage;
-                
-                while (true) {
-                    // Read client message
-                    readClientMessage = dataInputStream.readUTF();
-                    System.out.println("Client Says :" + readClientMessage);
-                    
-                    // Exit condition
-                    if(readClientMessage.equals("404")) {
-                        socket.close();
-                        serverSocket.close();
-                        System.out.println("Client disconnected: " + socket);
-                        System.exit(0);
-                        break;
-                    }
-                    
-                    // Get server input and send to client
-                    System.out.print("Server Write :");
-                    BufferedReader serverInput = new BufferedReader(new InputStreamReader(System.in));
-                    String serverMessage = serverInput.readLine();
-                    dataOutputStream.writeUTF(serverMessage);
-                    
-                    // Exit condition
-                    if(serverMessage.equals("404")) {
-                        dataOutputStream.flush();
-                        socket.close();
-                        serverSocket.close();
-                        System.exit(0);
-                        break;
-                    } else {
-                        dataOutputStream.flush();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-}
-    <h3>ChatLoopClient.java</h3>
-
-    import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.Socket;
-
-public class ChatLoopClient {
-    public static void main(String[] args) {
-        try(Socket socket = new Socket("localhost", 1234)) {
-            System.out.println("Connected to server.");
-            
-            // Set up input/output streams
-            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            BufferedReader clientInput = new BufferedReader(new InputStreamReader(System.in));
-            
-            String clientMessage;
-            while (true) {
-                // Get client input and send to server
-                System.out.println("Client Write :");
-                clientMessage = clientInput.readLine();
-                dataOutputStream.writeUTF(clientMessage);
-                
-                // Exit condition
-                if(clientMessage.equals("404")) {
-                    dataOutputStream.flush();
-                    socket.close();
-                    System.exit(0);
-                } else {
-                    dataOutputStream.flush();
-                }
-                
-                // Read server response
-                String readServerMessage = dataInputStream.readUTF();
-                System.out.println("Server Says :" + readServerMessage);
-                
-                // Exit condition
-                if(readServerMessage.equals("404")) {
-                    socket.close();
-                    System.out.println("Server disconnected: " + socket);
-                    System.exit(0);
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-}
-    
-
-    <h3>3. Group Chat Implementation</h3>
-
-    <h3>ChatGroupServer.java</h3>
-
-    import java.net.ServerSocket;
-import java.net.Socket;
-
-public class ChatGroupServer {
-    private final ServerSocket serverSocket;
-
-    public ChatGroupServer(ServerSocket serverSocket) {
-        this.serverSocket = serverSocket;
-    }
-
-    public void startServer() {
-        try {
-            while (!serverSocket.isClosed()) {
-                // Wait for client connection
-                Socket socket = serverSocket.accept();
-                System.out.println("A New Client has Connected");
-                
-                // Create handler for the client
-                ChatGroupHandler chatGroupHandler = new ChatGroupHandler(socket);
-                
-                // Start handler thread
-                Thread thread = new Thread(chatGroupHandler);
-                thread.start();
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    public static void main(String[] args) {
-        ServerSocket serverSocket = null;
-        try {
-            // Create server socket on port 1234
-            serverSocket = new ServerSocket(1234);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        
-        // Start server
-        ChatGroupServer chatGroupServer = new ChatGroupServer(serverSocket);
-        System.out.println("Start Server " + serverSocket);
-        chatGroupServer.startServer();
-    }
-}
-
-    <h3>ChatGroupHandler.java</h3>
-
-    import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
-
-public class ChatGroupHandler implements Runnable {
-    public static ArrayList<ChatGroupHandler> chatGroupHandlers = new ArrayList<>();
-    private Socket socket;
-    private DataInputStream dataInputStream;
-    private DataOutputStream dataOutputStream;
-    private String clientUserName;
-
-    public ChatGroupHandler(Socket socket) throws IOException {
-        this.socket = socket;
-        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
-        this.dataInputStream = new DataInputStream(socket.getInputStream());
-        this.clientUserName = dataInputStream.readUTF(); // Read username
-        chatGroupHandlers.add(this); // Add to handler list
-        broadcastMessage("Server Says " + clientUserName + " has entered the chat");
-    }
-
-    public void closeUtils(Socket socket, DataOutputStream dataOutputStream, 
-                          DataInputStream dataInputStream) throws IOException {
-        removeClientHandler();
-        socket.close();
-        dataOutputStream.close();
-        dataInputStream.close();
-    }
-
-    @Override
-    public void run() {
-        String messageFromClient;
-        while (socket.isConnected()) {
-            try {
-                messageFromClient = dataInputStream.readUTF();
-                broadcastMessage(messageFromClient); // Broadcast to all clients
-            } catch (Exception e) {
-                try {
-                    closeUtils(socket, dataOutputStream, dataInputStream);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-        }
-    }
-
-    public void broadcastMessage(String messageToSend) {
-        for(ChatGroupHandler chatGroupHandler : chatGroupHandlers) {
-            if(!chatGroupHandler.clientUserName.equals(clientUserName)) {
-                try {
-                    chatGroupHandler.dataOutputStream.writeUTF(messageToSend);
-                    chatGroupHandler.dataOutputStream.flush();
-                } catch (IOException e) {
-                    try {
-                        closeUtils(socket, dataOutputStream, dataInputStream);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
-
-    public void removeClientHandler() {
-        chatGroupHandlers.remove(this);
-        broadcastMessage("Server Says: " + clientUserName + " has left the chat");
-    }
-}
-
-    <h3>ChatGroupClient.java</h3>
-
-      import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Scanner;
-
-public class ChatGroupClient {
-    private Socket socket;
-    private DataInputStream dataInputStream;
-    private DataOutputStream dataOutputStream;
-    private String uname;
-
-    public ChatGroupClient(Socket socket, String uname) throws IOException {
-        this.socket = socket;
-        this.uname = uname;
-        this.dataInputStream = new DataInputStream(socket.getInputStream());
-        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
-    }
-
-    public void sendMessage() throws IOException {
-        try {
-            dataOutputStream.writeUTF(uname);
-            dataOutputStream.flush();
-
-            Scanner scanner = new Scanner(System.in);
-            while (socket.isConnected()) {
-                String messageToSend = scanner.nextLine();
-                dataOutputStream.writeUTF(uname + " " + messageToSend);
-                dataOutputStream.flush();
-            }
-        } catch (IOException e) {
-            closeUtils(socket, dataOutputStream, dataInputStream);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void closeUtils(Socket socket, DataOutputStream dataOutputStream, 
-                          DataInputStream dataInputStream) throws IOException {
-        socket.close();
-        dataOutputStream.close();
-        dataInputStream.close();
-    }
-
-    public void listenMessage() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String messageFromServer;
-                while (socket.isConnected()) {
-                    try {
-                        messageFromServer = dataInputStream.readUTF();
-                        System.out.println(messageFromServer);
-                    } catch (IOException e) {
-                        try {
-                            closeUtils(socket, dataOutputStream, dataInputStream);
-                        } catch (IOException ex) {
-                            throw new RuntimeException(ex);
-                        }
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        }).start();
-    }
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your username for the group chat:");
-        String username = scanner.nextLine();
-
-        Socket socket;
-        try {
-            socket = new Socket("localhost", 1234);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            ChatGroupClient chatGroupClient = new ChatGroupClient(socket, username);
-            chatGroupClient.listenMessage();
-            chatGroupClient.sendMessage();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-}
-
-  </div>
-
-  <div class="code-block">
-
-    <h2>Java Threading and Serialization</h2>
-    <h3>1. Threading Examples</h3>
-
-    <h3>Basic Thread Creation (MyThread.java & ThreadDemo.java)</h3>  
-
-    // MyThread.java
-public class MyThread implements Runnable {
-    @Override
-    public void run() {
-        String name = Thread.currentThread().getName();
-        System.out.println(name);
-    }
-}
-
-// ThreadDemo.java
-public class ThreadDemo {
-    public static void main(String[] args) {
-        MyThread myThread = new MyThread();
-        Thread thread = new Thread(myThread);
-        thread.setName("first");
-        thread.start();
-    }
-}
-    <h3>Thread Priority Example (e1/MyThread.java & e1/Run.java)</h3>
-
-    // e1/MyThread.java
-package e1;
-public class MyThread extends Thread {
-    @Override
-    public void run() {
-        System.out.println("Priority " + " " + 
-            Thread.currentThread().getPriority() + " " + 
-            Thread.currentThread().getName());
-    }
-}
-
-// e1/Run.java
-package e1;
-public class Run {
-    public static void main(String[] args) throws InterruptedException {
-        MyThread thread1 = new MyThread();
-        MyThread thread2 = new MyThread();
-        thread1.setName("T1");
-        thread2.setName("T2");
-        thread2.setPriority(Thread.MIN_PRIORITY);
-        thread1.start();
-        thread2.start();
-    }
-}
-
-    <h3>Thread Group Example (ThreadGroupDemo.java)</h3>
-
-    public class ThreadGroupDemo implements Runnable {
-    public static void main(String[] args) {
-        ThreadGroupDemo tg = new ThreadGroupDemo();
-        tg.func();
-    }
-
-    public void func() {
-        try {
-            ThreadGroup pGroup = new ThreadGroup("Parent ThreadGroup");
-            ThreadGroup cGroup = new ThreadGroup(pGroup, "Child ThreadGroup");
-
-            Thread t1 = new Thread(pGroup, this);
-            System.out.println("Starting " + t1.getName() + "...");
-            t1.start();
-
-            Thread t2 = new Thread(cGroup, this);
-            System.out.println("Starting " + t2.getName() + "...");
-            t2.start();
-
-            System.out.println("Active threads in \"" + pGroup.getName()
-                    + "\" = " + pGroup.activeCount());
-
-            t1.join();
-            t2.join();
-        } catch (InterruptedException ex) {
-            System.out.println(ex.getMessage());
-        }
-    }
-
-    public void run() {
-        for(int i = 0; i < 1000; i++) { i++; }
-        System.out.println(Thread.currentThread().getName() + " finished executing.");
-    }
-}
-
-          <h3>Deadlock Example (TestThread.java)</h3>
-
-          public class TestThread {
-    public static final Object Lock1 = new Object();
-    public static final Object Lock2 = new Object();
-
-    public static void main(String[] args) {
-        ThreadDemo1 T1 = new ThreadDemo1();
-        ThreadDemo2 T2 = new ThreadDemo2();
-        T1.start();
-        T2.start();
-    }
-
-    private static class ThreadDemo1 extends Thread {
-        public void run() {
-            synchronized (Lock1) {
-                System.out.println("Thread 1: Holding lock 1...");
-                try { Thread.sleep(10); } 
-                catch (InterruptedException e) {}
-                System.out.println("Thread 1: Waiting for lock 2...");
-                synchronized (Lock2) {
-                    System.out.println("Thread 1: Holding lock 1 & 2...");
-                }
-            }
-        }
-    }
-
-    private static class ThreadDemo2 extends Thread {
-        public void run() {
-            synchronized (Lock1) {
-                System.out.println("Thread 2: Holding lock 1...");
-                try { Thread.sleep(10); } 
-                catch (InterruptedException e) {}
-                System.out.println("Thread 2: Waiting for lock 2...");
-                synchronized (Lock2) {
-                    System.out.println("Thread 2: Holding lock 1 & 2...");
-                }
-            }
-        }
-    }
-}
-
-          <h3>2. Inter-Thread Communication (Chat Application)</h3>
-          <h3>Core Chat Class (Chat.java)</h3>
-
-          public class Chat {
-    boolean flag = false;
-
-    public synchronized void Question(String msg) {
-        if (flag) {
-            try { wait(); } 
-            catch (InterruptedException e) {}
-        }
-        System.out.println(msg);
-        flag = true;
-        notify();
-    }
-
-    public synchronized void Answer(String msg) {
-        if (!flag) {
-            try { wait(); } 
-            catch (InterruptedException e) {}
-        }
-        System.out.println(msg);
-        flag = false;
-        notify();
-    }
-}
-
-          <h3>Thread Implementations (T1.java & T2.java)</h3>
-
-          // T1.java
-class T1 implements Runnable {
-    Chat m;
-    String[] s1 = { "Hi i am Question", "How are you ?q", "I am also doing fine!q" };
-
-    public T1(Chat m1) {
-        this.m = m1;
-        new Thread(this, "Question").start();
-    }
-
-    public void run() {
-        for (int i = 0; i < s1.length; i++) {
-            m.Question(s1[i]);
-        }
-    }
-}
-
-// T2.java
-class T2 implements Runnable {
-    Chat m;
-    String[] s2 = { "Hi a am Answer", "I am good a, what about you?a", "Great!a" };
-
-    public T2(Chat m2) {
-        this.m = m2;
-        new Thread(this, "Answer").start();
-    }
-
-    public void run() {
-        for (int i = 0; i < s2.length; i++) {
-            m.Answer(s2[i]);
-        }
-    }
-}
-                            
-      <h3>3. Serialization Examples</h3>
-          <h3>Basic Serialization (Animal.java)</h3>
-
-          package e1;
-import java.io.*;
-
-public class Animal implements Serializable {
-    private String name;
-    private String breed;
-    private int age; // 'age' will not be serialized
-
-    @Serial
-    private void writeObject(ObjectOutputStream oos) throws IOException {
-        oos.defaultWriteObject(); // Serialize all fields except those we exclude
-    }
-
-    @Serial
-    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-        ois.defaultReadObject(); // Deserialize all fields except those we exclude
-    }
-    
-    // Constructors, getters, setters would be here
-}
-
-          <h3>Externalizable Implementation (Student.java & UniStudent.java)</h3>
-
-          // Student.java
-import java.io.Serializable;
-
-public class Student {
-    private String color;
-
-    public Student() {}
-    public Student(String color) { this.color = color; }
-    
-    public String getColor() { return color; }
-    public void setColor(String color) { this.color = color; }
-}
-
-// UniStudent.java
-import java.io.*;
-public class UniStudent extends Student implements Externalizable {
-    @Serial private static final long serialVersionUID = 1L;
-    private double speed;
-
-    public UniStudent() { super(); }
-    public UniStudent(double speed) { this.speed = speed; }
-    public UniStudent(String color, double speed) { super(color); this.speed = speed; }
-    
-    public double getSpeed() { return speed; }
-    public void setSpeed(double speed) { this.speed = speed; }
-
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(getColor());
-        out.writeDouble(getSpeed());
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        setColor((String) in.readObject());
-        speed = in.readDouble();
-    }
-}
-          
-  </div>
-
-  <div class="code-block">
-
-    <h2>Java Hibernate Library Management System - ORM</h2>
-    <h3>Entity Classes</h3>
-
-    <h3>Author.java</h3> 
-
-    package entity;
-
-import jakarta.persistence.*;
-import java.util.List;
-
-@Entity
-@Table(name = "author")
-public class Author {
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    @Column(name = "name")
-    private String authorName;
-
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "contact")
-    private String contactNumber;
-
-    @OneToMany(mappedBy = "author", cascade = {
-        CascadeType.PERSIST, 
-        CascadeType.MERGE, 
-        CascadeType.DETACH, 
-        CascadeType.REFRESH
-    })
-    private List<Book> bookList;
-
-    // Constructors
-    public Author() {}
-
-    public Author(int id, String authorName, String email, String contactNumber) {
-        this.id = id;
-        this.authorName = authorName;
-        this.email = email;
-        this.contactNumber = contactNumber;
-    }
-
-    // Getters and Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    public String getAuthorName() { return authorName; }
-    public void setAuthorName(String authorName) { this.authorName = authorName; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getContactNumber() { return contactNumber; }
-    public void setContactNumber(String contactNumber) { this.contactNumber = contactNumber; }
-    public List<Book> getBookList() { return bookList; }
-    public void setBookList(List<Book> bookList) { this.bookList = bookList; }
-}
-
-      <h3>Book.java</h3> 
-
-      package entity;
-
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "book")
-public class Book {
-    @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    @Column(name = "title", unique = true)
-    private String title;
-
-    @Column(name = "isbn", unique = true)
-    private long ISBN;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "author_id")
-    private Author author;
-
-    // Constructors
-    public Book() {}
-
-    public Book(int id, String title, long ISBN) {
-        this.id = id;
-        this.title = title;
-        this.ISBN = ISBN;
-    }
-
-    // Getters and Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public long getISBN() { return ISBN; }
-    public void setISBN(long ISBN) { this.ISBN = ISBN; }
-    public Author getAuthor() { return author; }
-    public void setAuthor(Author author) { this.author = author; }
-}
-
-      <h3>Hibernate Configuration</h3>
-
-      <h3>HibernateUtilService.java</h3>
-
-      package hibernateUtil;
-
-import org.hibernate.SessionFactory;
-import org.hibernate.boot.Metadata;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-
-public class HibernateUtilService {
-    private static StandardServiceRegistry registry;
-    private static SessionFactory sessionFactory;
-
-    public static SessionFactory getSessionFactory() {
-        try {
-            if (sessionFactory == null) {
-                registry = new StandardServiceRegistryBuilder().configure().build();
-                MetadataSources metadataSources = new MetadataSources(registry);
-                Metadata metadata = metadataSources.getMetadataBuilder().build();
-                sessionFactory = metadata.getSessionFactoryBuilder().build();
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            if (registry != null) {
-                StandardServiceRegistryBuilder.destroy(registry);
-            }
-        }
-        return sessionFactory;
-    }
-
-    public static void shutdown() {
-        if (registry != null) {
-            StandardServiceRegistryBuilder.destroy(registry);
-        }
-    }
-}
-
-      <h3>Service Layer</h3>
-      <h3>ManageLibrary.java</h3>
-
-      package service;
-
-import entity.Author;
-import entity.Book;
-import hibernateUtil.HibernateUtilService;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import org.hibernate.query.Query;
-import java.util.List;
-import java.util.Scanner;
-
-public class ManageLibrary {
-    private Scanner scanner;
-
-    public void addNewBook() {
-        Book book = new Book();
-        Author author = new Author();
-
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Book Title: ");
-        book.setTitle(scanner.nextLine());
-
-        scanner = new Scanner(System.in);
-        System.out.print("Enter ISBN Number: ");
-        book.setISBN(scanner.nextLong());
-
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Author Name: ");
-        author.setAuthorName(scanner.nextLine());
-
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Email: ");
-        author.setEmail(scanner.nextLine());
-
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Contact Number: ");
-        author.setContactNumber(scanner.nextLine());
-
-        book.setAuthor(author);
-
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.persist(book);
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            System.out.println(e.getMessage());
-        }
-    }
-
-    public Book getBookDetailsByTitle() {
-        Book book = null;
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Book Title For Search: ");
-        String title = scanner.nextLine();
-
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            String hql = "FROM Book WHERE title = :title";
-            Query<Book> query = session.createQuery(hql, Book.class);
-            query.setParameter("title", title);
-            book = query.uniqueResult();
-            transaction.commit();
-        }
-        return book;
-    }
-
-    public Book getBookDetailsByISBN() {
-        Book book = null;
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Book ISBN Number For Search: ");
-        long ISBN = scanner.nextLong();
-
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            String hql = "FROM Book WHERE ISBN = :ISBN";
-            Query<Book> query = session.createQuery(hql, Book.class);
-            query.setParameter("ISBN", ISBN);
-            book = query.uniqueResult();
-            transaction.commit();
-        }
-        return book;
-    }
-
-    public List<Book> getBookDetailsByAuthorName() {
-        List<Book> books = null;
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Author Name For Search: ");
-        String authorName = scanner.nextLine();
-
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            String hql = "FROM Book b JOIN FETCH b.author a WHERE a.authorName = :authorName";
-            Query<Book> query = session.createQuery(hql, Book.class);
-            query.setParameter("authorName", authorName);
-            books = query.getResultList();
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            System.out.println(e.getMessage());
-        }
-        return books;
-    }
-
-    public List<Book> getAllBooks() {
-        List<Book> books = null;
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            Query<Book> query = session.createQuery("SELECT b FROM Book b", Book.class);
-            books = query.getResultList();
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            System.out.println(e.getMessage());
-        }
-        return books;
-    }
-
-    public List<Author> getAllAuthors() {
-        List<Author> authors = null;
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            Query<Author> query = session.createQuery("SELECT a FROM Author a", Author.class);
-            authors = query.getResultList();
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            System.out.println(e.getMessage());
-        }
-        return authors;
-    }
-
-    public void deleteBook() {
-        scanner = new Scanner(System.in);
-        System.out.print("Enter Book Id For Deletion: ");
-        int id = scanner.nextInt();
-
-        Transaction transaction = null;
-        try (Session session = HibernateUtilService.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            Book book = session.find(Book.class, id);
-            if (book == null) {
-                System.out.println("Invalid Book ID");
-                return;
-            } else {
-                session.remove(book);
-                System.out.println("Successfully Deleted....");
-            }
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            System.out.println(e.getMessage());
-        }
-    }
-}
-          <h3>Main Application</h3>
-          <h3>Run.java</h3>
-
-              import entity.Author;
-import entity.Book;
-import service.ManageLibrary;
-import java.util.List;
-import java.util.Scanner;
-
-public class Run {
-    static Scanner scanner;
-
-    public static void main(String[] args) {
-        int choice;
-        ManageLibrary manageLibrary = new ManageLibrary();
-        Book book;
-        Author author;
-        List<Book> bookList;
-        List<Author> authorList;
-
-        while (true) {
-            System.out.println("\n***Menu***");
-            System.out.println("[1] Add New Book Details");
-            System.out.println("[2] Search By Title");
-            System.out.println("[3] Search By ISBN");
-            System.out.println("[4] Search By Author Name");
-            System.out.println("[5] List All Books");
-            System.out.println("[6] List All Authors");
-            System.out.println("[7] Delete Book");
-            System.out.println("[8] Exit");
-
-            scanner = new Scanner(System.in);
-            System.out.print("Enter Your Choice: ");
-            choice = scanner.nextInt();
-
-            switch (choice) {
-                case 1:
-                    manageLibrary.addNewBook();
-                    break;
-                case 2:
-                    book = manageLibrary.getBookDetailsByTitle();
-                    if (book == null) {
-                        System.out.println("No books found with given title");
-                    } else {
-                        printBookDetails(book);
-                    }
-                    break;
-                case 3:
-                    book = manageLibrary.getBookDetailsByISBN();
-                    if (book == null) {
-                        System.out.println("No books found with given ISBN");
-                    } else {
-                        printBookDetails(book);
-                    }
-                    break;
-                case 4:
-                    bookList = manageLibrary.getBookDetailsByAuthorName();
-                    if (bookList.isEmpty()) {
-                        System.out.println("No books found for given author");
-                    } else {
-                        for (Book b : bookList) {
-                            printBookDetails(b);
-                        }
-                    }
-                    break;
-                case 5:
-                    bookList = manageLibrary.getAllBooks();
-                    if (bookList.isEmpty()) {
-                        System.out.println("No books in the library");
-                    } else {
-                        for (Book b : bookList) {
-                            printBookDetails(b);
-                        }
-                    }
-                    break;
-                case 6:
-                    authorList = manageLibrary.getAllAuthors();
-                    if (authorList.isEmpty()) {
-                        System.out.println("No authors in the system");
-                    } else {
-                        for (Author a : authorList) {
-                            System.out.println("***Author Details***");
-                            System.out.println("Author Id: " + a.getId());
-                            System.out.println("Author Name: " + a.getAuthorName());
-                            System.out.println("Author Email: " + a.getEmail());
-                            System.out.println("Author Contact Number: " + a.getContactNumber() + "\n");
-                        }
-                    }
-                    break;
-                case 7:
-                    manageLibrary.deleteBook();
-                    break;
-                case 8:
-                    HibernateUtilService.shutdown();
-                    System.exit(0);
-                    break;
-                default:
-                    System.out.println("Invalid Input...");
-                    break;
-            }
-        }
-    }
-
-    private static void printBookDetails(Book book) {
-        System.out.println("***Book Details***");
-        System.out.println("Book Id: " + book.getId());
-        System.out.println("Book Title: " + book.getTitle());
-        System.out.println("Book ISBN Number: " + book.getISBN());
-        System.out.println("Author Id: " + book.getAuthor().getId());
-        System.out.println("Author Name: " + book.getAuthor().getAuthorName());
-        System.out.println("Author Email: " + book.getAuthor().getEmail());
-        System.out.println("Author Contact Number: " + book.getAuthor().getContactNumber() + "\n");
-    }
-}
-
-    </div>
-
-    <div class="code-block">
-
-    <h2>Java Thread Synchronization</h2>
-    <h3>1. Bank Account Transaction System</h3>
-
-    <h3>Account.java</h3>
-
-      package bankAccount;
-
-public class Account {
-    private double balance;
-
-    public Account(double balance) {
-        this.balance = balance;
-    }
-
-    public double getBalance() {
-        return balance;
-    }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
-    public synchronized void deposit(double amount) {
-        balance = balance + amount;
-        setBalance(balance);
-        System.out.println("Deposited " + amount + " New Balance " + getBalance());
-    }
-
-    public synchronized void withdrawal(double amount) {
-        if (balance >= amount) {
-            balance = balance - amount;
-            setBalance(balance);
-            System.out.println("Withdraw " + amount + " New Balance " + getBalance());
-        } else {
-            System.out.println("Insufficient Funds. Available Balance " + getBalance());
-        }
-    }
-}
-
-      <h3>BankTransaction.java</h3>
-
-      package bankAccount;
-
-public class BankTransaction {
-    private String transactionId;
-    private double amount;
-    private Account account;
-    private String type;
-
-    public BankTransaction(String transactionId, double amount, Account account, String type) {
-        this.transactionId = transactionId;
-        this.amount = amount;
-        this.account = account;
-        this.type = type;
-    }
-
-    // Getters and Setters
-    public String getTransactionId() { return transactionId; }
-    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
-    public double getAmount() { return amount; }
-    public void setAmount(double amount) { this.amount = amount; }
-    public Account getAccount() { return account; }
-    public void setAccount(Account account) { this.account = account; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-}
-
-      <h3>HandleTransaction.java</h3>
-
-      package bankAccount;
-
-public class HandleTransaction implements Runnable {
-    private BankTransaction bankTransaction;
-
-    public HandleTransaction(BankTransaction bankTransaction) {
-        this.bankTransaction = bankTransaction;
-    }
-
-    @Override
-    public void run() {
-        synchronized (bankTransaction.getAccount()) {
-            processTransaction();
-        }
-    }
-
-    private void processTransaction() {
-        System.out.println("Processing Transaction..." + bankTransaction.getTransactionId());
-
-        try {
-            Thread.sleep(1000);
-            if (bankTransaction.getType().equals("deposit")) {
-                bankTransaction.getAccount().deposit(bankTransaction.getAmount());
-            } else if (bankTransaction.getType().equals("withdrawal")) {
-                bankTransaction.getAccount().withdrawal(bankTransaction.getAmount());
-            } else {
-                System.out.println("Unknown transaction type: " + bankTransaction.getType());
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("Transaction processing interrupted: " + bankTransaction.getTransactionId());
-        }
-
-        System.out.println("Transaction processed: " + bankTransaction.getTransactionId());
-    }
-
-    // Getters and Setters
-    public BankTransaction getBankTransaction() { return bankTransaction; }
-    public void setBankTransaction(BankTransaction bankTransaction) { this.bankTransaction = bankTransaction; }
-}
-
-      <h3>RunDemo.java</h3>
-
-      package bankAccount;
-
-public class RunDemo {
-    public static void main(String[] args) {
-        Account account = new Account(10000);
-
-        BankTransaction bankTransaction1 = new BankTransaction("00001", 2500, account, "deposit");
-        BankTransaction bankTransaction2 = new BankTransaction("00002", 7000, account, "withdrawal");
-        BankTransaction bankTransaction3 = new BankTransaction("00003", 2500, account, "deposit");
-
-        HandleTransaction handleTransaction1 = new HandleTransaction(bankTransaction1);
-        HandleTransaction handleTransaction2 = new HandleTransaction(bankTransaction2);
-        HandleTransaction handleTransaction3 = new HandleTransaction(bankTransaction3);
-
-        Thread thread1 = new Thread(handleTransaction1);
-        Thread thread2 = new Thread(handleTransaction2);
-        Thread thread3 = new Thread(handleTransaction3);
-
-        thread1.start();
-        thread2.start();
-        thread3.start();
-    }
-}
-      <h3>2. Producer-Consumer Pattern Implementation</h3>
-
-      <h3>ShareMessage.java</h3>
-
-      package producerConsumer;
-
-public class ShareMessage {
-    private final int bufferSize;
-    private int index = -1;
-    private final String[] messages;
-
-    public ShareMessage(int bufferSize) {
-        this.bufferSize = bufferSize;
-        messages = new String[bufferSize];
-    }
-
-    public synchronized void produce(String message) {
-        String currentThreadName = Thread.currentThread().getName();
-
-        ++index;
-        messages[index] = message;
-        System.out.println("New Message is Produced...." + message);
-        notifyAll();
-
-        while (this.index == bufferSize - 1) {
-            try {
-                System.out.println(currentThreadName + " Buffer is Full waiting for Consumed...");
-                wait();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public synchronized String consume() {
-        String currentThreadName = Thread.currentThread().getName();
-
-        while (this.index == -1) {
-            System.out.println(currentThreadName + " Buffer is Empty waiting for Produce...");
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        String m = messages[this.index];
-        --index;
-        notifyAll();
-        return m;
-    }
-}
-
-      <h3>MessageProduceHandle.java</h3>
-
-      package producerConsumer;
-
-import java.util.Scanner;
-
-public class MessageProduceHandle implements Runnable {
-    private final ShareMessage shareMessage;
-
-    public MessageProduceHandle(ShareMessage shareMessage) {
-        this.shareMessage = shareMessage;
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            synchronized (shareMessage) {
-                Scanner scanner = new Scanner(System.in);
-                System.out.println("Enter Message:");
-                String m = scanner.nextLine();
-                if (m.equals("bye")) {
-                    System.exit(0);
-                } else {
-                    try {
-                        Thread.sleep(1000);
-                        shareMessage.produce(m);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        }
-    }
-}
-      <h3>MessageConsumeHandle.java</h3>
-
-      package producerConsumer;
-
-public class MessageConsumeHandle implements Runnable {
-    private final ShareMessage shareMessage;
-
-    public MessageConsumeHandle(ShareMessage shareMessage) {
-        this.shareMessage = shareMessage;
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            synchronized (shareMessage) {
-                try {
-                    Thread.sleep(500);
-                    String message = shareMessage.consume();
-                    System.out.println("Consumed Message: " + message);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
-}
-
-      <h3>RunMessageProgram.java</h3>
-
-      package producerConsumer;
-
-public class RunMessageProgram {
-    public static void main(String[] args) {
-        ShareMessage shareMessage = new ShareMessage(1);
-
-        Thread thread = new Thread(new MessageProduceHandle(shareMessage));
-        Thread thread1 = new Thread(new MessageConsumeHandle(shareMessage));
-        thread.setName("Producer");
-        thread1.setName("Consumer");
-
-        thread.start();
-        thread1.start();
-    }
-}
+ #Inensiy 
+# Import libraries
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load image in grayscale
+img = cv2.imread('image.jpg', 0)
+
+# Display original image
+plt.figure(figsize=(6, 6))
+plt.title("Original Image")
+plt.imshow(img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 1. Negative Transformation
+def negative_transformation(img):
+    neg_img = 255 - img
+    return neg_img
+
+# Apply and display
+neg_img = negative_transformation(img)
+plt.figure(figsize=(6, 6))
+plt.title("Negative Image")
+plt.imshow(neg_img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 2. Log Transformation
+def log_transformation(img):
+    c = 255 / np.log(1 + np.max(img))
+    log_img = c * (np.log(1 + img))
+    log_img = np.array(log_img, dtype=np.uint8)
+    return log_img
+
+# Apply and display
+log_img = log_transformation(img)
+plt.figure(figsize=(6, 6))
+plt.title("Log Transformed Image")
+plt.imshow(log_img, cmap='gray')
+plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 3. Gamma (Power-law) Transformation
+def gamma_transformation(img, gamma=1.0):
+    normalized_img = img / 255.0
+    gamma_img = np.power(normalized_img, gamma)
+    gamma_img = np.uint8(gamma_img * 255)
+    return gamma_img
+
+# Apply and display for different gamma values
+gammas = [0.5, 1.5, 2.0]
+plt.figure(figsize=(18, 6))
+for i, g in enumerate(gammas):
+    transformed = gamma_transformation(img, gamma=g)
+    plt.subplot(1, len(gammas), i+1)
+    plt.title(f"Gamma = {g}")
+    plt.imshow(transformed, cmap='gray')
+    plt.axis('off')
+plt.show()
+
+# --------------------------------------------
+# 4. Piecewise Linear Transformation
+def piecewise_linear_transformation(img, r1, s1, r2, s2):
+    def pixel_val(p):
+        if p < r1:
+            return (s1 / r1) * p
+        elif p < r2:
+            return ((s2 - s1) / (r2 - r1)) * (p - r1) + s1
+        else:
+            return ((255 - s2) / (255 - r2)) * (p - r2) + s2
+
+    pixel_val_vec = np.vectorize(pixel_val)
+    contrast_stretched = pixel_val_vec(img)
+    return np.array(contrast_stretched, dtype=np.uint8)
+
+# Apply and display
+r1, s1 = 70, 0
+r2, s2 = 140, 255
+contrast_img = piecewise_linear_transformation(img, r1, s1, r2, s2)
+
+plt.figure(figsize=(6, 6))
+plt.title("Piecewise Linear Transformation")
+plt.imshow(contrast_img, cmap='gray')
+plt.axis('off')
+plt.show()
+///////////////////////////////////////////////////////////
+import cv2
+from google.colab.patches import cv2_imshow
+
+image = cv2.imread('image.jpg')
+cv2_imshow(image)
+
+# Convert to grayscale
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# Save the grayscale image
+cv2.imwrite('gray_image.jpg', gray_image)
+
+# Read the image from file
+image = cv2.imread('gray_image.jpg')
+
+
+# Resize the image to 300x200
+resized_image = cv2.resize(image, (300, 200))
+# Save the resized image
+cv2.imwrite('resized_image.jpg', resized_image)
+
+
+#Rotating an Image
+(h, w) = image.shape[:2]
+center = (w // 2, h // 2)
+matrix = cv2.getRotationMatrix2D(center, 180, 1.0)
+rotated_image = cv2.warpAffine(image, matrix, (w, h))
+cv2.imwrite('rotated_image.jpg', rotated_image)
+
+#Blurring an Image
+blurred_image = cv2.GaussianBlur (image, (15, 15), 0)
+
+#Edge Detection
+# Convert to grayscale
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# Apply Canny edge detector
+edges = cv2.Canny (gray_image, 100, 200)
+
+
+# Draw a rectangle
+cv2.rectangle(image, (50, 50), (200, 200), (255, 0, 0), 10)
+# Add text to the image
+cv2.putText(image, 'OpenCV', (60, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+
+# Apply thresholding
+
+_,thresh_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+# Save the thresholded image
+cv2.imwrite('threshold_image.jpg', thresh_image)
+
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from google.colab.patches import cv2_imshow
+# Load the image
+image = cv2.imread("mage-with-bad-contrast_Q320.jpg", cv2.IMREAD_GRAYSCALE)
+#calculate histrogram
+histogram = cv2.calcHist([image], [0], None, [256], [0, 256])
+
+#display original image
+plt.figure(figsize=(8, 4))
+plt.subplot(1, 2, 1)
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+plt.title('Original Image')
+plt.axis('off')
+# Display the histogram
+plt.subplot(1, 2, 2)
+plt.plot(histogram)
+plt.title('Histogram')
+plt.xlabel('Pixel Value')
+plt.ylabel('Frequency')
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+#Histogram Equalization in OpenCV
+import cv2
+import numpy as np
+from google.colab.patches import cv2_imshow
+import matplotlib.pyplot as plt
+# Load the image in grayscale
+image = cv2.imread("mage-with-bad-contrast_Q320.jpg", cv2.IMREAD_GRAYSCALE)
+# Apply histogram equalization
+equalized_image = cv2.equalizeHist(image)
+# Display original and equalized images
+print("original Image")
+cv2_imshow(image)
+print("Equalized Image")
+cv2_imshow(equalized_image)
+# Calculate histograms
+hist_original = cv2.calcHist([image], [0], None, [256], [0, 256])
+hist_equalized = cv2.calcHist([equalized_image], [0], None, [256], [0, 256])
+# Plot histograms side by side
+plt.figure(figsize=(12, 4))
+# Original histogram
+plt.subplot(1, 2, 1)
+plt.plot(hist_original, color='gray')
+plt.title("Histogram of Original Image")
+plt.xlabel("Pixel value")
+plt.ylabel("Frequency")
+# Equalized histogram
+plt.subplot(1, 2, 2)
+plt.plot(hist_equalized, color='black')
+plt.title("Histogram of Equalized Image")
+plt.xlabel("Pixel value")
+plt.ylabel("Frequency")
+plt.tight_layout()
+plt.show()
+
+CLAHE (Contrast Limited Adaptive Histogram Equalization)
+img = cv2.imread('QOTql.png', cv2.IMREAD_GRAYSCALE)
+assert img is not None, "file could not be read, check with os.path.exists()" cv2_imshow(img);
+# create a CLAHE object (Arguments are optional).
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+cl1 = clahe.apply(img)
+cv2_imshow(cl1);
+Color image Histogram Processing
+
+# Load the image
+image = cv2.imread("macaw.jpg",cv2.COLOR_RGB2BGR)
+B = image[:,:,0] #blue layer
+G = image[:,:,1] #green layer
+R = image[:,:,2] #red layer
+B_histo= cv2.calcHist ([image], [0], None, [256], [0,256]) G_histo = cv2.calcHist([image], [1], None, [256], [0,256]) R_histo= cv2.calcHist([image], [2], None, [256], [0,256])
+#visualizing histograms
+plt.subplot(2, 2, 1)
+plt.plot(B_histo, 'b')
+plt.subplot(2, 2, 2)
+plt.plot(G_histo, 'g')
+plt.subplot(2, 2, 3)
+plt.plot(R_histo, 'r')
+
+# Load the image
+image = cv2.imread("macaw_1c.jpg",cv2.COLOR_RGB2BGR)
+cv2_imshow(image);
+
+#seperating colour channels
+B = image[:,:,0] #blue layer
+G= image[:,:,1] #green layer
+R = image[:,:,2] #red layer
+#equilize each channel seperately
+b_equi= cv2.equalizeHist(B)
+g_equi= cv2.equalizeHist(G)
+r_equi= cv2.equalizeHist(R)
+#calculate histograms for each channel seperately
+B_histo= cv2.calcHist ([b_equi], [0], None, [256], [0,256]) G_histo= cv2.calcHist([g_equi],[0], None, [256], [0,256]) R_histo= cv2.calcHist ([r_equi], [0], None, [256], [0,256])
+#merge thechannels and create new image
+equi_im = cv2.merge([b_equi,g_equi,r_equi])
+#visualize the equilized channels seperately
+plt.imshow(b_equi)
+plt.title("b_equi") plt.show() plt.imshow(g_equi) plt.title("g_equi") plt.show() plt.imshow(r_equi) plt.title("r_equi")
+plt.show()
+
+#visualize the channel histograms seperately
+
+plt.subplot(2, plt.plot(G_histo,
+'g')
+plt.subplot(2, 2, 2) plt.plot(R_histo, 'r')
+plt.subplot(2, 2, 3)
+plt.plot(B_histo, 'b')
+#visualize the original and equilized images
+cv2_imshow(image);
+cv2.imshow(equi_im);
+///////////////////////////////
+
+import matplotlib.pyplot as plt
+import cv2
+import numpy as np
+Linear Spatial Filtering
+Smoothing Filters
+Mean Filter / Averaging Filter
+
+# Read the image
+img = cv2.imread('inputimage.png', 0) #0 means grayscale
+# Obtain number of rows and columns
+m, n= img.shape
+ # Develop Averaging filter (3, 3) mask
+ mask = np.ones([3, 3], dtype = int)
+ mask mask / 9
+
+ # Convolve the 3X3 mask over the image
+ img_new = np.zeros([m, n])
+
+ for i in range(1, m-1):
+  for j in range(1, n-1):
+      temp = img[i-1, j-1]*mask[0, 0]+img[i-1, j]*mask[0, 1]+
+      img[i-1, j + 1]*mask [0, 2]+
+      img[i, j-1]*mask[1, 0]+ img[i, j]*mask[1, 1]+
+      img[i, j + 1]*mask[1, 2]+
+      img[i + 1, j-1]*mask[2, 0]+
+      img[i + 1, j]*mask[2, 1]+img[i + 1, j + 1]*mask[2, 2]
+      img_new[i, j]= temp
+img_new = img_new.astype (np. uint8)
+cv2.imwrite('Averaging Filtered Image.tif', img_new)
+
+ # Display the original image using matplotlib
+ plt.imshow(img, cmap='gray')
+ plt.title('Original Image')
+ plt.axis('off') # Hide axes for a cleaner look
+ plt.show()
+
+
+ # Display the blurred image using matplotlib
+ plt.imshow(img_new, cmap='gray')
+plt.title('Averaging Filtered Image')
+plt.axis('off') # Hide axes for a cleaner look
+plt.show()
+////////////////////////////////
+Gaussian Filter
+↑# Load the image
+ image = cv2.imread('PEL-PTE-s5-4-600x800.jpg', cv2.IMREAD_COLOR)
+
+ # Convert from BGR to RGB for correct color display
+ image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+
+ # Apply Gaussian filter
+ kernel_size = (15,15)
+ sigma_value = 0
+ # Create a figure with two subplots
+ fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+ # Display the original image
+ axes[0].imshow(image_rgb)
+ axes[0].set_title("Original Image")
+ axes[0].axis("off")
+
+ # Display the Gaussian-blurred image
+ axes[1].imshow(gaussian_blur)
+ axes[1].set_title("Gaussian Blur")
+ axes[1].axis ("off")
+
+ # Show the images
+ plt.show()
+
+
+Sharpening Filters
+Laplacian Filter
+
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+ # Apply Laplacian filter
+ laplacian = cv2.Laplacian(gray_image, cv2.CV_64F)
+
+ # Create a figure with two subplots
+ fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+ # Display the original image
+ axes[0].imshow(image_rgb)
+ axes[0].set_title("Original Image")
+ axes[0].axis("off")
+
+ # Display the Laplacian filtered image
+ axes[1].imshow(laplacian, cmap='gray')
+ axes[1].set_title("Laplacian Filter")
+ axes[1].axis ("off")
+
+ # Show the images
+ plt.show()
+////////////////////////
+Non-Linear Spatial Filtering
+Smoothing Filters
+Order Statistics (Non-linear) filter - Median Filter
+
+ # Read the image
+ img_noisy1 = cv2.imread('inputimage.png', 0)
+
+ # Obtain the number of rows and columns
+ # of the image
+ m, n = img_noisy1.shape
+
+ # Traverse the image. For every 3X3 area,
+Gaussian Blur
+Laplacian Filter
+ # find the median of the pixels and
+ # replace the center pixel by the median
+ img_new1 = np.zeros([m, n]) # This initializes an empty image (img_new) of the same size as the original image to store the filtered result.
+ for i in range(1, m-1):
+
+  for j in range(1, n-1):
+    temp = [img_noisy1 [i-1, j-1],
+    img_noisy1[i-1, j],
+    img_noisy1[i-1, j + 1],
+    img_noisy1[i, j-1],
+    img_noisy1[i, j],
+    img_noisy1[i, j + 1],
+    img_noisy1[i + 1, j-1],
+    img_noisy1[i + 1, j],
+
+i    mg_noisy1[i + 1, j + 1]]
+
+  temp = sorted (temp)
+
+# In a list of 9 sorted elements, the middle
+
+one is the 5th element.
+
+#But Python indexing starts at 0,
+    so temp[4] is the 5th element.
+
+    img_new1[i, j]= temp[4]
+
+ img_new1 = img_new1.astype (np.uint8)
+ cv2.imwrite('new_median_filtered.png', img_new1)
+
+ # Display the original image using matplotlib
+ plt.imshow(img_noisy1, cmap='gray')
+ plt.title('Original Image')
+ plt.axis('off') # Hide axes for a cleaner look
+ plt.show()
+
+
+ # Display the blurred image using matplotlib
+ plt.imshow(img_new1, cmap='gray')
+ plt.title('Median Filtered Image')
+ plt.axis('off') # Hide axes for a cleaner look
+ plt.show()
+
+
+            /////////////////////////////////////
+
+Morphological Transformations
+1. Erosion
+1 import cv2 as cv
+2 import numpy as np
+3 from google.colab.patches import cv2_imshow
+4 img = cv.imread('j.png', cv. IMREAD_GRAYSCALE)
+5 assert img is not None, "file could not be read, check with os.path.exists()"
+6 kernel = np.ones((5,5), np. uint8)
+7 erosion = cv.erode (img, kernel, iterations = 1)
+
+1 print("Original Image:")
+3
+2 cv2_imshow(img)
+4 print("Eroded Image:")
+5 cv2_imshow(erosion)
+
+#Dilation
+
+1 dilation = cv.dilate(img, kernel, iterations = 1)
+1 print("Original Image:")
+2 cv2_imshow(img)
+4 print("Dilated Image:")
+5 cv2_imshow(dilation)
+
+Opening
+3
+1 img_op_input = cv.imread('opening.png', cv. IMREAD_GRAYSCALE)
+2 assert img is not None, "file could not be read, check with os.path.exists()"
+3 opening = cv.morphologyEx(img_op_input, cv.MORPH_OPEN, kernel)
+1 print("Original Image:")
+2 cv2_imshow(img_op_input)
+4 print("Opened Image:")
+5 cv2_imshow(opening)
+
+Closing
+
+1 img_cl_input = cv.imread('closing.png', cv.IMREAD_GRAYSCALE)
+2 assert img is not None, "file could not be read, check with os.path.exists()"
+3 closing = cv.morphologyEx(img_cl_input, cv.MORPH_CLOSE, kernel)
+1 print("Original Image:")
+2 cv2_imshow(img_cl_input)
+4 print("Closed Image:")
+5 cv2_imshow(closing)
+
+Morphological Gradient
+3
+1 gradient = cv.morphologyEx(img, cv.MORPH_GRADIENT, kernel)
+1 print("Original Image:")
+2 cv2_imshow(img)
+4 print("Gradiented Image:")
+5 cv2_imshow(gradient)
+
+Hit or Miss
+1 import cv2 as cv
+2 import numpy as np
+3 from google.colab.patches import cv2_imshow # For displaying in Colab
+4
+5 # Define input image (small binary image)
+6 input_image = np.array((
+7
+[0, 0, 0, 0, 0, 0, 0, 0],
+8
+[0, 255, 255, 255, 0, 0, 0, 255],
+9 [0, 255, 255, 255, 0, 0, 0, 0],
+10
+[0, 255, 255, 255, 0, 255, 0, 0],
+11
+[0, 0, 255, 0, 0, 0, 0, 0],
+12
+[0, 0, 255, 0, 0, 255, 255, 0],
+13
+[0, 255, 0, 255, 0, 0, 255, 0],
+14 [0, 255, 255, 255, 0, 0, 0, 0]), dtype="uint8")
+15
+16 # Define kernel for hit-or-miss
+17 kernel = np.array((
+18 [0, 1, 0],
+19
+[1, -1, 1],
+20 [0, 1, 0]), dtype="int")
+21
+22 # Apply Hit-or-Miss operation
+→
+B
+23 output_image = cv.morphologyEx (input_image, cv.MORPH HITMISS, kernel)
+24
+25 # Scale up for visibility (e.g., 40x each pixel)
+26 scale = 40
+27 input_resized = cv.resize(input_image, (input_image.shape[1]*scale, input_image.shape[0]*scale), interpolation=cv.INTER_NEAREST)
+28 output_resized = cv.resize(output_image, (output_image.shape[1]*scale, output_image.shape[0]*scale), interpolation=cv.INTER_NEAREST)
+29
+30 # Display
+31 print("Input Image:")
+32 cv2_imshow(input_resized)
+33
+34 print("Output Image (Hit-or-Miss):")
+35 cv2_imshow(output_resized)
+36
+////////////////////////////////////
+
+Edge Detection - Sobel Edge Detection
+
+1 import cv2
+2 import numpy as np
+3 import matplotlib.pyplot as plt
+4
+5 # Load the image
+6 image_path
+=
+'Edge Detection.png'
+7 image = cv2.imread(image_path)
+8
+9 # Convert to grayscale
+10 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+11
+12 # Apply Gaussian smoothing (optional)
+13 blurred_image = cv2.GaussianBlur (gray_image, (3, 3), 0)
+14
+15 # Sobel operators
+16 Gx = cv2.Sobel (blurred_image, cv2.CV_64F, 1, 0, ksize=3)
+17 Gy= cv2.Sobel (blurred_image, cv2.CV_64F, 0, 1, ksize=3)
+18
+19 # Gradient magnitude
+20 G = np.sqrt(Gx**2 + Gy**2)
+21
+22 # Normalize to range 0-255
+23 Gx = np. uint8 (255* np.abs (Gx) / np.max(Gx))
+24 Gy = np. uint8 (255* np.abs (Gy) / np.max(Gy))
+25 G = np. uint8 (255 G/ np.max(G))
+26
+27 # Display the results
+28 plt.figure(figsize=(15, 10))
+29
+30 # Original image
+31 plt.subplot(2, 2, 1)
+32 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+33 plt.title('Original Image')
+34 plt.axis('off')
+35
+36 # Gradient in x direction
+37 plt.subplot(2, 2, 2)
+38 plt.imshow(Gx, cmap='gray')
+39 plt.title('Gradient in x direction')
+40 plt.axis('off')
+41
+42 # Gradient in Y direction
+43 plt.subplot(2, 2, 3)
+44 plt.imshow(Gy, cmap='gray')
+45 plt.title('Gradient in Y direction')
+46 plt.axis('off')
+47
+48 # Edge-detected image
+49 plt.subplot(2, 2, 4)
+50 plt.imshow(G, cmap='gray')
+51 plt.title('Sobel Edge Detection')
+52 plt.axis('off')
+54 plt.show()
+
+Edge Detection - Canny Edge Detection
+1 import cv2
+2 import numpy as np
+3 import matplotlib.pyplot as plt
+4
+5 # Load the image
+6 image_path = 'Edge Detection.png' # Replace with your image path
+7 image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+8 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+9
+10 # Apply Gaussian blur to reduce noise
+11 blurred_image = cv2.GaussianBlur (gray_image, (5, 5), 1.4)
+12
+13 # Apply Canny edge detector
+14 edges = cv2.Canny(blurred_image, 100, 200)
+15
+16 # Display the result
+17 plt.figure(figsize=(10, 5))
+18
+19 # Original image
+20 plt.subplot(1, 2, 1)
+21 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+22 plt.title('Original Image')
+23 plt.axis('off')
+24
+25 # Edge-detected image
+26 plt.subplot(1, 2, 2)
+27 plt.imshow(edges, cmap='gray')
+28 plt.title('Canny Edge Detection')
+29 plt.axis('off')
+H
+30
+31 plt.show()
+
+Edge Detection- Laplacian Edge Detection
+
+1 import cv2
+2 import numpy as np
+3 import matplotlib.pyplot as plt
+4
+5 # Load the image
+6 image_path = 'Edge Detection.png' # Replace with your image path
+7 image
+=
+cv2.imread(image_path, cv2.IMREAD_COLOR)
+8 gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+9
+10 # Optional: Apply Gaussian blur to reduce noise
+11 blurred_image = cv2.GaussianBlur (gray_image, (3, 3), 0)
+12
+13 # Apply the Laplacian operator
+14 laplacian = cv2.Laplacian (blurred_image, cv2.CV_64F)
+15
+16 # Convert the result to 8-bit (0-255) range
+17 laplacian_abs = cv2.convertScaleAbs (laplacian)
+18
+19 # Display the result
+20 plt.figure(figsize=(10, 5))
+21
+22 # Original image
+23 plt.subplot(1, 2, 1)
+24 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+25 plt.title('Original Image')
+26 plt.axis('off')
+27
+28 # Laplacian edge-detected image
+29 plt.subplot(1, 2, 2)
+30 plt.imshow(laplacian_abs, cmap='gray')
+31 plt.title('Laplacian Edge Detection')
+32 plt.axis('off')
+33
+34 plt.show()
+
+link textEdge Detection-Prewitt Edge Detection
+1 import cv2
+2 import numpy as np
+3 import matplotlib.pyplot as plt
+4
+5 def prewitt_edge_detection (image):
+Laplacian Edge Detection
+11
+12
+13
+6
+# Convert the image to grayscale
+7
+gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+8
+9
+# Apply horizontal Prewitt kernel
+10 kernel_x = np.array([[-1, 0, 1],
+[-1, 0, 1],
+[-1, 0, 1]])
+horizontal_edges
+=
+cv2.filter2D (gray_image, -1, kernel_x)
+14
+15
+16
+17
+# Apply vertical Prewitt kernel
+kernel y = np.array([[-1, -1, -1],
+[0, 0, 0],
+18
+[1, 1, 1]])
+19
+20
+vertical_edges = cv2.filter2D (gray_image, -1, kernel_y)
+# Ensure both arrays have the same data type
+21
+horizontal_edges = np.float32(horizontal_edges)
+22
+vertical_edges = np.float32(vertical_edges)
+23
+24
+# Compute gradient magnitude
+25
+26
+27
+28
+threshold 50
+29
+30
+gradient_magnitude = cv2.magnitude (horizontal_edges, vertical_edges)
+# Optional: Apply thresholding to highlight edges
+edges = cv2.threshold (gradient_magnitude, threshold, 255, cv2.THRESH_BINARY)
+31 return edges
+32
+33 # Read the input image
+34 image = cv2.imread('Edge Detection.png')
+[]
+35
+36 # Apply Prewitt edge detection
+37 edges = prewitt_edge_detection(image)
+38
+39 # Plotting both images using subplots
+40 plt.figure(figsize=(10, 5))
+41
+42 # Original Image
+43 plt.subplot(1, 2, 1)
+44 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+45 plt.title('Original Image')
+46 plt.axis('off')
+47
+48 # Detected Edges
+49 plt.subplot(1, 2, 2)
+50 plt.imshow(edges, cmap='gray')
+51 plt.title('Prewitt Edge Detection')
+52 plt.axis('off')
+53
+54 plt.show()
+
+Global Thresholding
+1 import cv2
+2 import numpy as np
+3 import matplotlib.pyplot as plt
+4
+5 # Load the image
+6 color_image = cv2.imread('threshold.png', cv2.IMREAD_COLOR)
+7
+8 # convert to grayscale image
+9 grayscale_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+10
+11 # Manual thresholding
+12 threshold_value = 128 # Example manual threshold value
+13_, binary_image = cv2.threshold (grayscale_image, threshold_value, 255, cv2.THRESH_BINARY)
+H
+14
+15 # Display the original and thresholded images
+16 plt.figure(figsize=(15, 5))
+17
+18 plt.subplot(1, 3, 1)
+19 plt.title('Original Image')
+20 plt.imshow(color_image, cmap='gray')
+21 plt.axis('off')
+22
+23 plt.subplot(1, 3, 2)
+24 plt.title('Grayscale Image')
+25 plt.imshow(grayscale_image, cmap='gray')
+26 plt.axis('off')
+27
+28 plt.subplot(1, 3, 3)
+29 plt.title(f'Global Thresholding (T={threshold_value})')
+30 plt.imshow(binary_image, cmap='gray')
+31 plt.axis('off')
+32 plt.show()
+Local Thresholding
+
+import cv2
+import matplotlib.pyplot as plt
+# Load the original color image
+color_image = cv2.imread('threshold.png')
+# Convert the color image to grayscale
+# Apply Adaptive Mean Thresholding gray_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+adaptive_mean = cv2.adaptiveThreshold (gray_image, 255, cv2.ADAPTIVE_THRESH_MEAN_C,CV2.THRESH_BINARY, 11, 2)
+
+
+ # Apply Adaptive Gaussian Thresholding
+adaptive_gaussian = cv2.adaptive Threshold (gray_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+
+
+CV2.THRESH_BINARY, 11, 2)
+ # Display the original, grayscale, and thresholded images
+ titles = ['Original Image', 'Grayscale Image', 'Adaptive Mean Thresholding', 'Adaptive Gaussian Thresholding']
+ images = [color_image, gray_image, adaptive_mean, adaptive_gaussian]
+
+ plt.figure(figsize=(15, 10))
+ for i in range(4):
+
+plt.subplot(2, 2, i+1)
+
+if i == 0:
+
+plt.imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB)) # Convert BGR to RGB for displaying correctly with matplotlib
+
+else:
+
+plt.imshow(images[i], cmap='gray')
+
+
+plt.title(titles[i])
+plt.xticks([]), plt.yticks([])
+31 plt.show()
+
 
     </div>
       
