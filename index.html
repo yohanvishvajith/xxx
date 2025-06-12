@@ -37,6 +37,306 @@
   <div class="code-block">
 
  #Inensiy 
+    import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+plt.rcParams["figure.autolayout"] = True
+img= cv2.imread('breast.tif)')
+def negative(r):
+  s=255-r
+  return s
+x_values = np.linspace(0,255,256)
+y_values = negative(x_values)
+plt.plot(x_values,y_values)
+plt.xlabel('Input Intensity Level')
+plt.ylabel('Output Intensity Level')
+plt.title('Negative Transformation')
+plt.show()
+if img is None:
+    print("Error: Could not open or read the image file.")
+else:
+    img_neg = negative(img)
+plt.figure(figsize=(10, 5))
+
+
+plt.subplot(1, 2, 1)
+plt.imshow(img)
+plt.title('Original Image')
+plt.axis('off')
+
+
+plt.subplot(1, 2, 2)
+plt.imshow(img_neg)
+plt.title('Negative Image')
+plt.axis('off')
+
+def scale_image(input_img):
+    input_img = input_img / np.max(input_img)
+    input_img = (input_img*255).astype('int')
+    return input_img
+
+def plot_results(input_img, output_img, x_values, y_values, save_as):
+    plt.figure(figsize = (36,12))
+
+    plt.subplot(131)
+    plt.imshow(input_img)
+    plt.title('Input Image')
+    plt.axis('off')
+
+    plt.subplot(132)
+    plt.plot(x_values, y_values)
+    plt.xlabel('Input Pixels')
+    plt.ylabel('Output Pixels')
+    plt.grid(True)
+
+    plt.subplot(133)
+    plt.imshow(output_img)
+    plt.title('Transformed Image')
+    plt.axis('off')
+
+    plt.savefig(save_as + '.png')
+plot_results(img, img_neg, x_values, y_values, 'negative')
+im = cv2.imread('Fig0305(a)(DFT_no_log).tif')
+def logTransform(r, c=1):
+    s = c * np.log(1.0 + r)
+    return s
+
+img_log = logTransform(im)
+img_log_scaled = scale_image(img_log)
+x_values = np.linspace(0, 255, 500)
+y_values = logTransform(x_values)
+plot_results(im, img_log_scaled, x_values, y_values, 'log')
+def inverter_log_transform(r, c=1):
+    s = np.exp(r**1/c)-1
+    return s
+
+img_inv_log = inverter_log_transform(im)
+img_inv_log_scaled = scale_image(img_inv_log)
+
+x_values = np.linspace(0, 255, 500)
+y_values = inverter_log_transform(x_values)
+
+plot_results(im, img_inv_log_scaled, x_values, y_values, 'inverter_log')
+
+spine_img = cv2.imread('Fig0308(a)(fractured_spine).tif')
+
+plt.figure(figsize=(12, 8))
+plt.imshow(spine_img)
+plt.axis('off')
+def gammaTransform(r,gamma, c=1):
+  s = c *(r**gamma)
+  return s
+
+img_gamma = gammaTransform(spine_img, 0.5)
+img_gamma_scaled = scale_image(img_gamma)
+
+X_values = np.linspace(0, 255, 500)
+Y_values = gammaTransform(X_values, 0.4)
+
+plot_results(spine_img, img_gamma_scaled, X_values, Y_values, 'gamma_0_4')
+#
+def performGammaTransform(input_img, gammaValue):
+    img_gamma = gammaTransform(input_img, gammaValue)
+    img_gamma_scaled = scale_image(img_gamma)
+
+    x_values = np.linspace(0, 255, 500)
+    y_values = gammaTransform(x_values, gammaValue)
+
+    plot_results(input_img, img_gamma_scaled, x_values, y_values, "gamma" + str(gammaValue))
+
+    return img_gamma_scaled
+
+final_images = []
+
+for gammaValue in [0.6, 0.4, 0.3]:
+    final_images.append(performGammaTransform(spine_img, gammaValue))
+plt.figure(figsize=(24, 12))
+
+plt.subplot(221)
+plt.imshow(spine_img)
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(222)
+plt.imshow(final_images[0])
+plt.title('Gamma = 0.6')
+plt.axis('off')
+
+plt.subplot(223)
+plt.imshow(final_images[1])
+plt.title('Gamma = 0.4')
+plt.axis('off')
+
+plt.subplot(224)
+plt.imshow(final_images[2])
+plt.title('Gamma = 0.3')
+plt.axis('off')
+
+plt.tight_layout()
+plt.savefig('Gamma.png')
+arial_im = cv2.imread('Fig0309(a)(washed_out_aerial_image).tif')
+
+plt.figure(figsize=(10, 6))
+plt.imshow(arial_im)
+plt.axis('off')
+final_images_arial = []
+
+for gammaValue in [3.0, 4.0, 5.0]:
+    final_images_arial.append(performGammaTransform(arial_im, gammaValue))
+plt.figure(figsize=(24, 12))
+
+plt.subplot(221)
+plt.imshow(arial_im)
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(222)
+plt.imshow(final_images_arial[0])
+plt.title('Gamma = 3.0')
+plt.axis('off')
+
+plt.subplot(223)
+plt.imshow(final_images_arial[1])
+plt.title('Gamma = 4.0')
+plt.axis('off')
+
+plt.subplot(224)
+plt.imshow(final_images_arial[2])
+plt.title('Gamma = 5.0')
+plt.axis('off')
+
+plt.tight_layout()
+plt.savefig('gamma_arial.png')
+pollen_img = cv2.imread('Fig0310(b)(washed_out_pollen_image).tif')
+
+plt.figure(figsize=(10, 6))
+plt.imshow(pollen_img)
+plt.axis('off')
+def piecewise_linear(r, r1, s1, r2, s2):
+    if r < r1:
+        s = (s1 / r1) * r
+    elif r1 <= r <= r2:
+        s = ((s2 - s1) / (r2 - r1)) * (r - r1) + s1
+    else:
+        s = ((255 - s2) / (255 - r2)) * (r - r2) + s2
+    return int(s)
+
+piecewise_linear_vec = np.vectorize(piecewise_linear)
+
+x_values = np.linspace(0, 255, 500)
+y_values = piecewise_linear_vec(x_values, 80, 30, 150, 190)
+
+transformed_im = piecewise_linear_vec(pollen_img, 80, 30, 150, 190)
+
+plot_results(pollen_img, transformed_im, x_values, y_values, 'piecewise')
+m = np.mean(pollen_img)
+
+transformed_im2 = piecewise_linear_vec(pollen_img, m, 0, m, 255)
+
+x_values = np.linspace(0, 255, 500)
+y_values = piecewise_linear_vec(x_values, m, 0, m, 255)
+
+plot_results(pollen_img, transformed_im2, x_values, y_values, 'piecewise2')
+kidney_img = cv2.imread('Fig0312(a)(kidney).tif')
+
+plt.figure(figsize=(12, 8))
+plt.imshow(kidney_img)
+plt.axis('off')
+def intensityLevelTransformL(r):
+    if r > 140 and r < 210:
+        return 255
+    else:
+        return 0
+
+intensityLevelTransformL_vec = np.vectorize(intensityLevelTransformL)
+
+transformL = intensityLevelTransformL_vec(kidney_img)
+
+x_values = np.linspace(0, 255, 500)
+y_values = intensityLevelTransformL_vec(x_values)
+
+plot_results(kidney_img, transformL, x_values, y_values, 'intensity_level')
+def intensityLevelTransform2(r):
+    if r > 140 and r < 210:
+        return 240
+    else:
+        return r
+
+intensityLevelTransform2_vec = np.vectorize(intensityLevelTransform2)
+
+transform2 = intensityLevelTransform2_vec(kidney_img)
+
+x_values = np.linspace(0, 255, 500)
+y_values = intensityLevelTransform2_vec(x_values)
+
+plot_results(kidney_img, transform2, x_values, y_values, 'intensity_level2')
+dollar_img = cv2.imread('Fig0314(a)(100-dollars).tif', 0)
+plt.imshow(dollar_img, cmap="gray")
+plt.axis('off')
+
+def bitPlaneSlicing(r, bit_plane):
+    dec = np.binary_repr(r, width=8)
+    return int(dec[8-bit_plane])
+
+bitPlaneSlicingVec = np.vectorize(bitPlaneSlicing)
+
+eight_bitplane = bitPlaneSlicingVec(dollar_img, bit_plane=8)
+
+plt.imshow(eight_bitplane, cmap="gray")
+bit_planes_dict = {}
+for bit_plane in np.arange(8, 0, -1):
+    bit_planes_dict['bit_plane_' + str(bit_plane)] = bitPlaneSlicingVec(dollar_img, bit_plane=bit_plane)
+
+plt.figure(figsize=(24, 12))
+
+plt.subplot(331)
+plt.imshow(dollar_img, cmap="gray")
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(332)
+plt.imshow(bit_planes_dict['bit_plane_8'], cmap="gray")
+plt.title('Bit Plane 8 (MSB)')
+plt.axis('off')
+
+plt.subplot(333)
+plt.imshow(bit_planes_dict['bit_plane_7'], cmap="gray")
+plt.title('Bit Plane 7')
+plt.axis('off')
+
+plt.subplot(334)
+plt.imshow(bit_planes_dict['bit_plane_6'], cmap="gray")
+plt.title('Bit Plane 6')
+plt.axis('off')
+
+plt.subplot(335)
+plt.imshow(bit_planes_dict['bit_plane_5'], cmap="gray")
+plt.title('Bit Plane 5')
+plt.axis('off')
+
+plt.subplot(336)
+plt.imshow(bit_planes_dict['bit_plane_4'], cmap="gray")
+plt.title('Bit Plane 4')
+plt.axis('off')
+
+plt.subplot(337)
+plt.imshow(bit_planes_dict['bit_plane_3'], cmap="gray")
+plt.title('Bit Plane 3')
+plt.axis('off')
+
+plt.subplot(338)
+plt.imshow(bit_planes_dict['bit_plane_2'], cmap="gray")
+plt.title('Bit Plane 2')
+plt.axis('off')
+
+plt.subplot(339)
+plt.imshow(bit_planes_dict['bit_plane_1'], cmap="gray")
+plt.title('Bit Plane 1 (LSB)')
+plt.axis('off')
+
+plt.tight_layout()
+plt.savefig('bit_plane_slicing.png')
+      /////////////////////
 # Import libraries
 import cv2
 import numpy as np
